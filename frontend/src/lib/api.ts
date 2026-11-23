@@ -1,4 +1,4 @@
-import { PublicTenantConfig, AuthUser } from '../types';
+import { PublicTenantConfig, AuthUser, TenantRecord, TenantUser } from '../types';
 
 const API_BASE = '/api';
 
@@ -55,3 +55,111 @@ export async function logout(): Promise<void> {
   });
 }
 
+// ================= Super Admin APIs =================
+
+export async function getSuperAdminTenants(): Promise<TenantRecord[]> {
+  const res = await fetch(`${API_BASE}/super-admin/tenants`, {
+    credentials: 'include',
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || 'Failed to fetch school tenants');
+  }
+  return res.json();
+}
+
+export async function createTenant(payload: any): Promise<{ tenant: TenantRecord; initialAdmin?: TenantUser }> {
+  const res = await fetch(`${API_BASE}/super-admin/tenants`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || 'Failed to create school tenant');
+  }
+  return data;
+}
+
+export async function updateTenant(tenantId: string, payload: any): Promise<TenantRecord> {
+  const res = await fetch(`${API_BASE}/super-admin/tenants/${tenantId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || 'Failed to update tenant');
+  }
+  return data;
+}
+
+export async function getTenantUsers(tenantId: string): Promise<TenantUser[]> {
+  const res = await fetch(`${API_BASE}/super-admin/tenants/${tenantId}/users`, {
+    credentials: 'include',
+  });
+  if (!res.ok) {
+    throw new Error('Failed to fetch tenant users');
+  }
+  return res.json();
+}
+
+export async function createTenantUser(
+  tenantId: string,
+  payload: { name: string; email: string; password: string; role: 'SCHOOL_ADMIN' | 'COUNSELOR' }
+): Promise<TenantUser> {
+  const res = await fetch(`${API_BASE}/super-admin/tenants/${tenantId}/users`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || 'Failed to create user');
+  }
+  return data;
+}
+
+export async function updateTenantUser(
+  userId: string,
+  payload: { name?: string; role?: 'SCHOOL_ADMIN' | 'COUNSELOR'; isActive?: boolean; password?: string }
+): Promise<TenantUser> {
+  const res = await fetch(`${API_BASE}/super-admin/users/${userId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || 'Failed to update user');
+  }
+  return data;
+}
+
+export async function syncTenantNow(tenantId: string): Promise<{ success: boolean; lastSyncedAt: string; message: string }> {
+  const res = await fetch(`${API_BASE}/super-admin/tenants/${tenantId}/sync-now`, {
+    method: 'POST',
+    credentials: 'include',
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || 'Failed to trigger sync');
+  }
+  return data;
+}
+
+export async function impersonateTenant(tenantId: string): Promise<{ success: boolean; token: string; tenant: { id: string; name: string; slug: string } }> {
+  const res = await fetch(`${API_BASE}/super-admin/tenants/${tenantId}/impersonate`, {
+    method: 'POST',
+    credentials: 'include',
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || 'Failed to impersonate tenant');
+  }
+  return data;
+}

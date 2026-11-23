@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { getTenantConfig, getMe, login, logout } from '../lib/api';
 import { PublicTenantConfig, AuthUser } from '../types';
+import SuperAdminDashboard from '../components/super-admin/SuperAdminDashboard';
 
 export default function Home() {
   const [tenantConfig, setTenantConfig] = useState<PublicTenantConfig | null>(null);
@@ -109,6 +110,53 @@ export default function Home() {
           <div className="w-8 h-8 border-4 border-slate-300 border-t-slate-800 rounded-full animate-spin"></div>
           <p className="text-sm text-slate-500">Resolving portal context...</p>
         </div>
+      </div>
+    );
+  }
+
+  // If user is a verified SUPER_ADMIN and on the admin context, render the Super Admin Console!
+  if (currentUser?.role === 'SUPER_ADMIN' && activeSlug === 'admin') {
+    return (
+      <div>
+        {/* Context bar to quickly test switching to provisioned schools */}
+        <header className="bg-slate-950 text-slate-400 text-xs py-1.5 px-4 flex items-center justify-between border-b border-slate-800">
+          <div className="flex items-center gap-2">
+            <span className="text-slate-300 font-medium">Domain Simulator:</span>
+            <span className="text-amber-400 font-mono">admin.yourplatform.com</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span>Switch to school subdomain:</span>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSlugSwitch(customSlugInput);
+              }}
+              className="flex items-center gap-1"
+            >
+              <input
+                type="text"
+                value={customSlugInput}
+                onChange={(e) => setCustomSlugInput(e.target.value)}
+                placeholder="school-slug"
+                className="px-2 py-0.5 rounded bg-slate-800 text-white border border-slate-700 text-xs w-28"
+              />
+              <button
+                type="submit"
+                className="px-2 py-0.5 rounded bg-slate-700 text-white text-xs hover:bg-slate-600"
+              >
+                Go
+              </button>
+            </form>
+          </div>
+        </header>
+
+        <SuperAdminDashboard
+          currentUser={currentUser}
+          onLogout={handleLogout}
+          onImpersonateSuccess={(slug) => {
+            handleSlugSwitch(slug);
+          }}
+        />
       </div>
     );
   }
