@@ -1,5 +1,7 @@
 # 03 — PostgreSQL Database Schema & Indexes
 
+## 1. PostgreSQL Schema DDL
+
 ```sql
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
@@ -96,3 +98,21 @@ CREATE INDEX idx_leads_tenant_lead_date ON leads (tenant_id, lead_date);
 CREATE UNIQUE INDEX idx_leads_tenant_row_hash ON leads (tenant_id, external_row_hash) WHERE external_row_hash IS NOT NULL;
 CREATE INDEX idx_notes_lead_noted_at ON follow_up_notes (lead_id, noted_at ASC);
 ```
+
+## 2. Zero Hardcoded Data & Super-Admin-Only Seeding Policy
+1. The database seed script (`npm run db:seed`) MUST ONLY insert the initial `SUPER_ADMIN` user with credentials read from environment variables:
+   - `SUPER_ADMIN_NAME`
+   - `SUPER_ADMIN_EMAIL`
+   - `SUPER_ADMIN_PASSWORD`
+2. Idempotent insertion rule:
+   ```sql
+   INSERT INTO users (name, email, password_hash, role, is_active, tenant_id)
+   VALUES ($1, $2, $3, 'SUPER_ADMIN', true, NULL)
+   ON CONFLICT (email) DO NOTHING;
+   ```
+3. **STRICTLY FORBIDDEN IN SEED SCRIPT & CODEBASE:**
+   - No mock/sample school tenants (zero references to `YIS` or demo schools).
+   - No sample `SCHOOL_ADMIN` accounts.
+   - No sample `COUNSELOR` accounts.
+   - No sample campaigns or mock leads.
+4. All schools, administrators, counselors, campaigns, and leads must be created dynamically through the application interface or Google Sheets sync.

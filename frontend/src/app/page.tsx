@@ -16,8 +16,9 @@ export default function Home() {
   const [submitting, setSubmitting] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
 
-  // Subdomain slug (defaults to 'yis' if running on plain localhost for dev demo)
-  const [activeSlug, setActiveSlug] = useState<string>('yis');
+  // Subdomain slug (defaults to 'admin' for initial Super Admin setup)
+  const [activeSlug, setActiveSlug] = useState<string>('admin');
+  const [customSlugInput, setCustomSlugInput] = useState<string>('');
 
   const loadConfigAndUser = async (slugToLoad: string) => {
     setLoading(true);
@@ -29,6 +30,8 @@ export default function Home() {
       // Inject dynamic tenant primary color into CSS variable
       if (config.primaryColor) {
         document.documentElement.style.setProperty('--brand-primary', config.primaryColor);
+      } else {
+        document.documentElement.style.setProperty('--brand-primary', '#1E3A8A');
       }
 
       // Check if user is already authenticated
@@ -40,6 +43,7 @@ export default function Home() {
       }
     } catch (err: any) {
       setError(err.message || 'Failed to load school portal');
+      setTenantConfig(null);
     } finally {
       setLoading(false);
     }
@@ -67,8 +71,10 @@ export default function Home() {
   }, []);
 
   const handleSlugSwitch = (newSlug: string) => {
-    setActiveSlug(newSlug);
-    loadConfigAndUser(newSlug);
+    const slug = newSlug.trim().toLowerCase();
+    if (!slug) return;
+    setActiveSlug(slug);
+    loadConfigAndUser(slug);
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -101,7 +107,7 @@ export default function Home() {
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-4 border-slate-300 border-t-slate-800 rounded-full animate-spin"></div>
-          <p className="text-sm text-slate-500">Loading school portal...</p>
+          <p className="text-sm text-slate-500">Resolving portal context...</p>
         </div>
       </div>
     );
@@ -109,26 +115,45 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
-      {/* Dev Switcher Bar (useful for testing subdomains on localhost) */}
-      <header className="bg-slate-900 text-slate-300 text-xs py-2 px-4 flex items-center justify-between border-b border-slate-800">
+      {/* Dev Context Bar */}
+      <header className="bg-slate-900 text-slate-300 text-xs py-2 px-4 flex flex-wrap items-center justify-between gap-2 border-b border-slate-800">
         <div className="flex items-center gap-2">
-          <span className="font-semibold text-white">Dev Portal Switcher:</span>
-          <button
-            onClick={() => handleSlugSwitch('yis')}
-            className={`px-2 py-0.5 rounded ${activeSlug === 'yis' ? 'bg-blue-600 text-white font-medium' : 'bg-slate-800 hover:bg-slate-700'}`}
-          >
-            YIS School Portal
-          </button>
+          <span className="font-semibold text-white">Subdomain Switcher:</span>
           <button
             onClick={() => handleSlugSwitch('admin')}
-            className={`px-2 py-0.5 rounded ${activeSlug === 'admin' ? 'bg-purple-600 text-white font-medium' : 'bg-slate-800 hover:bg-slate-700'}`}
+            className={`px-2.5 py-1 rounded text-xs transition ${
+              activeSlug === 'admin'
+                ? 'bg-purple-600 text-white font-medium'
+                : 'bg-slate-800 hover:bg-slate-700'
+            }`}
           >
-            Super Admin Portal
+            admin (Super Admin)
           </button>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSlugSwitch(customSlugInput);
+            }}
+            className="flex items-center gap-1 ms-2"
+          >
+            <input
+              type="text"
+              value={customSlugInput}
+              onChange={(e) => setCustomSlugInput(e.target.value)}
+              placeholder="e.g. school-slug"
+              className="px-2 py-0.5 rounded bg-slate-800 text-white placeholder-slate-500 border border-slate-700 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+            <button
+              type="submit"
+              className="px-2 py-0.5 rounded bg-slate-700 hover:bg-slate-600 text-white text-xs"
+            >
+              Go
+            </button>
+          </form>
         </div>
-        <div>
-          <span>Active Context: </span>
-          <code className="bg-slate-800 px-1 py-0.5 rounded text-amber-400 font-mono">
+        <div className="flex items-center gap-2">
+          <span>Active Context:</span>
+          <code className="bg-slate-800 px-2 py-0.5 rounded text-amber-400 font-mono text-xs">
             {activeSlug}.yourplatform.com
           </code>
         </div>
@@ -138,16 +163,19 @@ export default function Home() {
       <main className="flex-1 flex flex-col items-center justify-center p-4">
         {error ? (
           <div className="max-w-md w-full bg-white rounded-xl shadow-sm border border-slate-200 p-6 text-center">
-            <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 font-bold text-xl">
+            <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4 font-bold text-xl">
               !
             </div>
-            <h2 className="text-lg font-semibold text-slate-900 mb-2">Portal Unavailable</h2>
-            <p className="text-sm text-slate-600 mb-4">{error}</p>
+            <h2 className="text-lg font-semibold text-slate-900 mb-2">School Portal Not Found</h2>
+            <p className="text-sm text-slate-600 mb-4">
+              No active tenant found for slug <code className="font-mono bg-slate-100 px-1 py-0.5 rounded">{activeSlug}</code>.
+              School tenants are provisioned dynamically via the Super Admin Console.
+            </p>
             <button
-              onClick={() => handleSlugSwitch('yis')}
-              className="text-xs text-blue-600 hover:underline"
+              onClick={() => handleSlugSwitch('admin')}
+              className="text-xs bg-purple-600 text-white px-3 py-1.5 rounded-lg hover:bg-purple-700 transition"
             >
-              Switch back to sample school
+              Go to Super Admin Portal
             </button>
           </div>
         ) : (
@@ -165,11 +193,11 @@ export default function Home() {
                   className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4 text-white font-bold text-xl"
                   style={{ backgroundColor: 'var(--brand-primary, #1E3A8A)' }}
                 >
-                  {tenantConfig?.dashboardTitle?.charAt(0) || 'S'}
+                  {tenantConfig?.dashboardTitle?.charAt(0) || 'P'}
                 </div>
               )}
               <h1 className="text-xl font-bold text-slate-900">
-                {tenantConfig?.dashboardTitle || 'Admissions Portal'}
+                {tenantConfig?.dashboardTitle || 'Portal Login'}
               </h1>
               {tenantConfig?.timezone && (
                 <p className="text-xs text-slate-500 mt-1">
@@ -199,7 +227,7 @@ export default function Home() {
 
                   <div className="text-center pt-2">
                     <p className="text-xs text-slate-500 mb-4">
-                      Milestone 1 auth verification passed! Session verified via HttpOnly JWT cookie.
+                      Session verified via HttpOnly JWT cookie.
                     </p>
                     <button
                       onClick={handleLogout}
@@ -229,7 +257,7 @@ export default function Home() {
                       placeholder={
                         activeSlug === 'admin'
                           ? 'admin@platform.com'
-                          : 'admin@yis.edu.sa or counselor@yis.edu.sa'
+                          : 'user@school.edu'
                       }
                       className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-start"
                     />
@@ -257,15 +285,6 @@ export default function Home() {
                   >
                     {submitting ? 'Authenticating...' : 'Sign In'}
                   </button>
-
-                  <div className="pt-2 text-center text-xs text-slate-400">
-                    <p>Demo Credentials:</p>
-                    <p className="font-mono mt-0.5">
-                      {activeSlug === 'admin'
-                        ? 'admin@platform.com / AdminPassword123!'
-                        : 'admin@yis.edu.sa / SchoolAdmin123!'}
-                    </p>
-                  </div>
                 </form>
               )}
             </div>
@@ -274,9 +293,8 @@ export default function Home() {
       </main>
 
       <footer className="py-4 text-center text-xs text-slate-400">
-        Milestone 1 — Subdomain Resolver & RBAC Auth Verification
+        Multi-Tenant Admissions & Campaign Follow-Up Platform
       </footer>
     </div>
   );
 }
-

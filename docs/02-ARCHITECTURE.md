@@ -7,10 +7,11 @@
 - **Database:** Native PostgreSQL 16 with nightly `pg_dump` via Linux `crontab`.
 
 ## 2. Subdomain Resolution & Silent White-Label Flow
-1. Request arrives at Nginx (`https://yis.yourplatform.com`).
+1. Request arrives at Nginx (`https://<school-slug>.yourplatform.com`).
 2. Nginx forwards `Host` header to backend/frontend.
-3. Public endpoint `GET /api/tenant/config` extracts slug (`yis`) from `Host`, queries `tenants WHERE slug = 'yis' AND status = 'ACTIVE'`, and returns `{ dashboardTitle, logoUrl, primaryColor, timezone }`.
+3. Public endpoint `GET /api/tenant/config` extracts slug (`<school-slug>`) from `Host`, queries `tenants WHERE slug = '<school-slug>' AND status = 'ACTIVE'`, and returns `{ dashboardTitle, logoUrl, primaryColor, timezone }`.
 4. If slug is `admin`, frontend loads the Super Admin login view. If slug is unknown or `SUSPENDED`, return 404/Suspended notice without revealing platform internals.
+5. All tenant branding and campaign configurations are loaded dynamically from the database. Zero tenant names or branding attributes are hardcoded.
 
 ## 3. In-Memory Caching (`lru-cache`)
 - Configure `LRUCache` with `max: 500` entries and `ttl: 60_000` (60 seconds).

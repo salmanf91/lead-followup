@@ -1,7 +1,7 @@
 # 05 — Hybrid Sync Engine & Regex Parser Specification
 
 ## 1. Expected Google Sheet Structure
-Each mapped tab in the connected Google Sheet represents a **Campaign** (e.g., `Al-Khobar`, `Dhaharan-Aziziya`, `Khobar - 17 MI`, `Campaign - 4 (9-12)`, `Kg - campaign 5`).
+Each mapped tab in the connected Google Sheet represents a **Campaign** dynamically discovered from the sheet tabs.
 Standard columns (case-insensitive header matching):
 - `Date` (Lead intake date)
 - `Name` (Parent/Student name in Arabic or English)
@@ -17,10 +17,10 @@ Standard columns (case-insensitive header matching):
 
 ## 3. Note, Date & Agent Tag Parser
 Free-text cells in `Followup - 1/2/3` often contain multiple pipe-separated entries, e.g.:
-`16.11.2026 | sent a reminder (turki) | 17.11.2026 | answered | going for a vacation (turki)`
+`16.11.2026 | sent a reminder (counselor_name) | 17.11.2026 | answered | interested in admission (counselor_name)`
 - **Date Regex:** `/(\b\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4}\b)/` -> Parse to ISO timestamp.
-- **Counselor Tag Regex:** `/\(([^)]+)\)\s*$/` -> Extracts `(turki)`, `(Wafaa)`, `(nada)` as `counselor_tag`.
-- **Keyword Status Classifier (Case-Insensitive):**
+- **Counselor Tag Regex:** `/\(([^)]+)\)\s*$/` -> Extracts `(name)` as `counselor_tag`.
+- **Keyword Status Classifier (Configurable per Tenant via JSONB):**
   - `POSITIVE`: `["interested", "inerested", "will visit", "visiting", "admission", "assessment", "positive"]`
   - `NEGATIVE`: `["not interested", "dead lead", "dead", "wrong number", "cancelled", "negative"]`
   - `INVALID_DUPLICATE`: `["duplicate", "invalid", "repeat"]`
