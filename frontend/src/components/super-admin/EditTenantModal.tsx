@@ -272,3 +272,4 @@ export default function EditTenantModal({ tenant, isOpen, onClose, onUpdated }: 
     </div>
   );
 }
+

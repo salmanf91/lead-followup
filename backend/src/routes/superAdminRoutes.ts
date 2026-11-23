@@ -1,81 +1,11 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { z } from 'zod';
 import { config } from '../config/index.js';
 import { query } from '../db/index.js';
 import { Tenant, User, JWTPayload } from '../types/index.js';
 
 export const superAdminRouter = Router();
-
-// Validation Schemas
-const createTenantSchema = z.object({
-  name: z.string().min(1, 'School name is required'),
-  slug: z
-    .string()
-    .min(2, 'Slug must be at least 2 characters')
-    .max(50)
-    .regex(/^[a-z0-9-]+$/, 'Slug must be lowercase alphanumeric and hyphens only'),
-  dashboardTitle: z.string().min(1, 'Dashboard title is required'),
-  logoUrl: z.string().nullable().optional(),
-  primaryColor: z
-    .string()
-    .regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, 'Must be a valid hex color code')
-    .optional()
-    .default('#1E3A8A'),
-  timezone: z.string().optional().default('Asia/Riyadh'),
-  dataMode: z.enum(['HYBRID_SHEET', 'NATIVE_ONLY']).optional().default('HYBRID_SHEET'),
-  googleSheetId: z.string().nullable().optional(),
-  enableSheetWriteback: z.boolean().optional().default(false),
-  keywordRules: z.record(z.any()).optional().default({}),
-  status: z.enum(['ACTIVE', 'SUSPENDED']).optional().default('ACTIVE'),
-  planType: z.enum(['ONE_TIME', 'ANNUAL']).optional().default('ANNUAL'),
-  renewalDate: z.string().nullable().optional(),
-  adminNotes: z.string().nullable().optional(),
-  initialAdmin: z
-    .object({
-      name: z.string().min(1),
-      email: z.string().email(),
-      password: z.string().min(6),
-    })
-    .optional(),
-});
-
-const updateTenantSchema = z.object({
-  name: z.string().min(1).optional(),
-  slug: z
-    .string()
-    .min(2)
-    .max(50)
-    .regex(/^[a-z0-9-]+$/)
-    .optional(),
-  dashboardTitle: z.string().min(1).optional(),
-  logoUrl: z.string().nullable().optional(),
-  primaryColor: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/).optional(),
-  timezone: z.string().optional(),
-  dataMode: z.enum(['HYBRID_SHEET', 'NATIVE_ONLY']).optional(),
-  googleSheetId: z.string().nullable().optional(),
-  enableSheetWriteback: z.boolean().optional(),
-  keywordRules: z.record(z.any()).optional(),
-  status: z.enum(['ACTIVE', 'SUSPENDED']).optional(),
-  planType: z.enum(['ONE_TIME', 'ANNUAL']).optional(),
-  renewalDate: z.string().nullable().optional(),
-  adminNotes: z.string().nullable().optional(),
-});
-
-const createUserSchema = z.object({
-  name: z.string().min(1, 'User name is required'),
-  email: z.string().email('Valid email is required'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  role: z.enum(['SCHOOL_ADMIN', 'COUNSELOR']),
-});
-
-const updateUserSchema = z.object({
-  name: z.string().min(1).optional(),
-  role: z.enum(['SCHOOL_ADMIN', 'COUNSELOR']).optional(),
-  password: z.string().min(6).optional(),
-  isActive: z.boolean().optional(),
-});
 
 /**
  * GET /api/super-admin/tenants
@@ -104,18 +34,45 @@ superAdminRouter.get('/tenants', async (_req: Request, res: Response): Promise<v
  */
 superAdminRouter.post('/tenants', async (req: Request, res: Response): Promise<void> => {
   try {
-    const parse = createTenantSchema.safeParse(req.body);
-    if (!parse.success) {
-      res.status(400).json({ error: 'Invalid input', details: parse.error.flatten() });
+    const body = req.body || {};
+    const name = typeof body.name === 'string' ? body.name.trim() : '';
+    const slug = typeof body.slug === 'string' ? body.slug.trim().toLowerCase() : '';
+    const dashboardTitle = typeof body.dashboardTitle === 'string' ? body.dashboardTitle.trim() : '';
+    const logoUrl = typeof body.logoUrl === 'string' && body.logoUrl.trim() ? body.logoUrl.trim() : null;
+    const primaryColor =
+      typeof body.primaryColor === 'string' && /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(body.primaryColor)
+        ? body.primaryColor
+        : '#1E3A8A';
+    const timezone = typeof body.timezone === 'string' && body.timezone.trim() ? body.timezone.trim() : 'Asia/Riyadh';
+    const dataMode = body.dataMode === 'NATIVE_ONLY' ? 'NATIVE_ONLY' : 'HYBRID_SHEET';
+    const googleSheetId =
+      typeof body.googleSheetId === 'string' && body.googleSheetId.trim() ? body.googleSheetId.trim() : null;
+    const enableSheetWriteback = Boolean(body.enableSheetWriteback);
+    const keywordRules = body.keywordRules && typeof body.keywordRules === 'object' ? body.keywordRules : {};
+    const status = body.status === 'SUSPENDED' ? 'SUSPENDED' : 'ACTIVE';
+    const planType = body.planType === 'ONE_TIME' ? 'ONE_TIME' : 'ANNUAL';
+    const renewalDate = typeof body.renewalDate === 'string' && body.renewalDate.trim() ? body.renewalDate.trim() : null;
+    const adminNotes = typeof body.adminNotes === 'string' && body.adminNotes.trim() ? body.adminNotes.trim() : null;
+
+    if (!name) {
+      res.status(400).json({ error: 'School name is required' });
       return;
     }
 
-    const data = parse.data;
+    if (!slug || slug.length < 2 || !/^[a-z0-9-]+$/.test(slug)) {
+      res.status(400).json({ error: 'Slug must be at least 2 lowercase alphanumeric characters or hyphens' });
+      return;
+    }
+
+    if (!dashboardTitle) {
+      res.status(400).json({ error: 'Dashboard title is required' });
+      return;
+    }
 
     // Check slug uniqueness
-    const existingSlug = await query('SELECT id FROM tenants WHERE slug = $1', [data.slug]);
+    const existingSlug = await query('SELECT id FROM tenants WHERE slug = $1', [slug]);
     if (existingSlug.rows.length > 0) {
-      res.status(409).json({ error: `School with slug '${data.slug}' already exists` });
+      res.status(409).json({ error: `School with slug '${slug}' already exists` });
       return;
     }
 
@@ -127,20 +84,20 @@ superAdminRouter.post('/tenants', async (req: Request, res: Response): Promise<v
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
       RETURNING *`,
       [
-        data.name,
-        data.slug,
-        data.dashboardTitle,
-        data.logoUrl || null,
-        data.primaryColor,
-        data.timezone,
-        data.dataMode,
-        data.googleSheetId || null,
-        data.enableSheetWriteback,
-        JSON.stringify(data.keywordRules),
-        data.status,
-        data.planType,
-        data.renewalDate || null,
-        data.adminNotes || null,
+        name,
+        slug,
+        dashboardTitle,
+        logoUrl,
+        primaryColor,
+        timezone,
+        dataMode,
+        googleSheetId,
+        enableSheetWriteback,
+        JSON.stringify(keywordRules),
+        status,
+        planType,
+        renewalDate,
+        adminNotes,
       ]
     );
 
@@ -148,19 +105,23 @@ superAdminRouter.post('/tenants', async (req: Request, res: Response): Promise<v
 
     // Optionally provision initial SCHOOL_ADMIN if supplied
     let initialAdminUser = null;
-    if (data.initialAdmin) {
-      const existingUser = await query('SELECT id FROM users WHERE LOWER(email) = LOWER($1)', [
-        data.initialAdmin.email,
-      ]);
-      if (existingUser.rows.length === 0) {
-        const hash = await bcrypt.hash(data.initialAdmin.password, 10);
-        const adminRes = await query(
-          `INSERT INTO users (tenant_id, name, email, password_hash, role, is_active)
-           VALUES ($1, $2, $3, $4, 'SCHOOL_ADMIN', true)
-           RETURNING id, name, email, role, is_active, created_at`,
-          [createdTenant.id, data.initialAdmin.name, data.initialAdmin.email.toLowerCase(), hash]
-        );
-        initialAdminUser = adminRes.rows[0];
+    if (body.initialAdmin && typeof body.initialAdmin === 'object') {
+      const adminName = typeof body.initialAdmin.name === 'string' ? body.initialAdmin.name.trim() : '';
+      const adminEmail = typeof body.initialAdmin.email === 'string' ? body.initialAdmin.email.trim().toLowerCase() : '';
+      const adminPassword = typeof body.initialAdmin.password === 'string' ? body.initialAdmin.password : '';
+
+      if (adminEmail && adminPassword && adminPassword.length >= 6) {
+        const existingUser = await query('SELECT id FROM users WHERE LOWER(email) = LOWER($1)', [adminEmail]);
+        if (existingUser.rows.length === 0) {
+          const hash = await bcrypt.hash(adminPassword, 10);
+          const adminRes = await query(
+            `INSERT INTO users (tenant_id, name, email, password_hash, role, is_active)
+             VALUES ($1, $2, $3, $4, 'SCHOOL_ADMIN', true)
+             RETURNING id, name, email, role, is_active, created_at`,
+            [createdTenant.id, adminName || `${name} Admin`, adminEmail, hash]
+          );
+          initialAdminUser = adminRes.rows[0];
+        }
       }
     }
 
@@ -181,13 +142,7 @@ superAdminRouter.post('/tenants', async (req: Request, res: Response): Promise<v
 superAdminRouter.patch('/tenants/:id', async (req: Request, res: Response): Promise<void> => {
   try {
     const tenantId = req.params.id;
-    const parse = updateTenantSchema.safeParse(req.body);
-    if (!parse.success) {
-      res.status(400).json({ error: 'Invalid input', details: parse.error.flatten() });
-      return;
-    }
-
-    const data = parse.data;
+    const body = req.body || {};
 
     // Check tenant exists
     const existing = await query('SELECT id FROM tenants WHERE id = $1', [tenantId]);
@@ -196,78 +151,79 @@ superAdminRouter.patch('/tenants/:id', async (req: Request, res: Response): Prom
       return;
     }
 
-    // If changing slug, check uniqueness
-    if (data.slug) {
-      const slugCheck = await query('SELECT id FROM tenants WHERE slug = $1 AND id <> $2', [
-        data.slug,
-        tenantId,
-      ]);
+    // If changing slug, check validity and uniqueness
+    if (body.slug !== undefined) {
+      const slug = typeof body.slug === 'string' ? body.slug.trim().toLowerCase() : '';
+      if (!slug || slug.length < 2 || !/^[a-z0-9-]+$/.test(slug)) {
+        res.status(400).json({ error: 'Slug must be at least 2 lowercase alphanumeric characters or hyphens' });
+        return;
+      }
+      const slugCheck = await query('SELECT id FROM tenants WHERE slug = $1 AND id <> $2', [slug, tenantId]);
       if (slugCheck.rows.length > 0) {
-        res.status(409).json({ error: `Slug '${data.slug}' is already taken` });
+        res.status(409).json({ error: `Slug '${slug}' is already taken` });
         return;
       }
     }
 
-    // Build dynamic SQL UPDATE clause
     const fields: string[] = [];
     const values: any[] = [];
     let idx = 1;
 
-    if (data.name !== undefined) {
+    if (typeof body.name === 'string') {
       fields.push(`name = $${idx++}`);
-      values.push(data.name);
+      values.push(body.name.trim());
     }
-    if (data.slug !== undefined) {
+    if (typeof body.slug === 'string') {
       fields.push(`slug = $${idx++}`);
-      values.push(data.slug);
+      values.push(body.slug.trim().toLowerCase());
     }
-    if (data.dashboardTitle !== undefined) {
+    if (typeof body.dashboardTitle === 'string') {
       fields.push(`dashboard_title = $${idx++}`);
-      values.push(data.dashboardTitle);
+      values.push(body.dashboardTitle.trim());
     }
-    if (data.logoUrl !== undefined) {
+    if (body.logoUrl !== undefined) {
       fields.push(`logo_url = $${idx++}`);
-      values.push(data.logoUrl);
+      values.push(typeof body.logoUrl === 'string' && body.logoUrl.trim() ? body.logoUrl.trim() : null);
     }
-    if (data.primaryColor !== undefined) {
+    if (typeof body.primaryColor === 'string' && /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(body.primaryColor)) {
       fields.push(`primary_color = $${idx++}`);
-      values.push(data.primaryColor);
+      values.push(body.primaryColor);
     }
-    if (data.timezone !== undefined) {
+    if (typeof body.timezone === 'string') {
       fields.push(`timezone = $${idx++}`);
-      values.push(data.timezone);
+      values.push(body.timezone.trim());
     }
-    if (data.dataMode !== undefined) {
+    if (body.dataMode === 'HYBRID_SHEET' || body.dataMode === 'NATIVE_ONLY') {
       fields.push(`data_mode = $${idx++}`);
-      values.push(data.dataMode);
+      values.push(body.dataMode);
     }
-    if (data.googleSheetId !== undefined) {
+    if (body.googleSheetId !== undefined) {
       fields.push(`google_sheet_id = $${idx++}`);
-      values.push(data.googleSheetId);
+      values.push(typeof body.googleSheetId === 'string' && body.googleSheetId.trim() ? body.googleSheetId.trim() : null);
     }
-    if (data.enableSheetWriteback !== undefined) {
+    if (body.enableSheetWriteback !== undefined) {
       fields.push(`enable_sheet_writeback = $${idx++}`);
-      values.push(data.enableSheetWriteback);
+      values.push(Boolean(body.enableSheetWriteback));
     }
-    if (data.keywordRules !== undefined) {
+    if (body.keywordRules !== undefined && typeof body.keywordRules === 'object') {
       fields.push(`keyword_rules = $${idx++}`);
-      values.push(JSON.stringify(data.keywordRules));
+      values.push(JSON.stringify(body.keywordRules));
     }
-    if (data.status !== undefined) {
+    if (body.status === 'ACTIVE' || body.status === 'SUSPENDED') {
       fields.push(`status = $${idx++}`);
-      values.push(data.status);
+      values.push(body.status);
     }
-    if (data.planType !== undefined) {
+    if (body.planType === 'ONE_TIME' || body.planType === 'ANNUAL') {
       fields.push(`plan_type = $${idx++}`);
-      values.push(data.planType);
+      values.push(body.planType);
     }
-    if (data.renewalDate !== undefined) {
+    if (body.renewalDate !== undefined) {
       fields.push(`renewal_date = $${idx++}`);
-      values.push(data.renewalDate);
+      values.push(typeof body.renewalDate === 'string' && body.renewalDate.trim() ? body.renewalDate.trim() : null);
     }
-    if (data.adminNotes !== undefined) {
+    if (body.adminNotes !== undefined) {
       fields.push(`admin_notes = $${idx++}`);
-      values.push(data.adminNotes);
+      values.push(typeof body.adminNotes === 'string' && body.adminNotes.trim() ? body.adminNotes.trim() : null);
     }
 
     if (fields.length === 0) {
@@ -327,16 +283,30 @@ superAdminRouter.post('/tenants/:tenantId/users', async (req: Request, res: Resp
       return;
     }
 
-    const parse = createUserSchema.safeParse(req.body);
-    if (!parse.success) {
-      res.status(400).json({ error: 'Invalid input', details: parse.error.flatten() });
+    const { name, email, password, role } = req.body || {};
+
+    if (!name || typeof name !== 'string') {
+      res.status(400).json({ error: 'User name is required' });
       return;
     }
 
-    const { name, email, password, role } = parse.data;
+    if (!email || typeof email !== 'string' || !email.includes('@')) {
+      res.status(400).json({ error: 'Valid email is required' });
+      return;
+    }
+
+    if (!password || typeof password !== 'string' || password.length < 6) {
+      res.status(400).json({ error: 'Password must be at least 6 characters' });
+      return;
+    }
+
+    if (role !== 'SCHOOL_ADMIN' && role !== 'COUNSELOR') {
+      res.status(400).json({ error: "Role must be 'SCHOOL_ADMIN' or 'COUNSELOR'" });
+      return;
+    }
 
     // Check email uniqueness
-    const emailCheck = await query('SELECT id FROM users WHERE LOWER(email) = LOWER($1)', [email]);
+    const emailCheck = await query('SELECT id FROM users WHERE LOWER(email) = LOWER($1)', [email.trim()]);
     if (emailCheck.rows.length > 0) {
       res.status(409).json({ error: `User with email '${email}' already exists` });
       return;
@@ -347,7 +317,7 @@ superAdminRouter.post('/tenants/:tenantId/users', async (req: Request, res: Resp
       `INSERT INTO users (tenant_id, name, email, password_hash, role, is_active)
        VALUES ($1, $2, $3, $4, $5, true)
        RETURNING id, tenant_id, name, email, role, is_active, created_at`,
-      [tenantId, name, email.toLowerCase().trim(), hash, role]
+      [tenantId, name.trim(), email.toLowerCase().trim(), hash, role]
     );
 
     res.status(201).json(result.rows[0]);
@@ -364,13 +334,7 @@ superAdminRouter.post('/tenants/:tenantId/users', async (req: Request, res: Resp
 superAdminRouter.patch('/users/:userId', async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.params.userId;
-    const parse = updateUserSchema.safeParse(req.body);
-    if (!parse.success) {
-      res.status(400).json({ error: 'Invalid input', details: parse.error.flatten() });
-      return;
-    }
-
-    const data = parse.data;
+    const body = req.body || {};
 
     // Prevent modifying SUPER_ADMIN users via tenant user endpoint
     const existing = await query<User>('SELECT id, role FROM users WHERE id = $1', [userId]);
@@ -388,20 +352,23 @@ superAdminRouter.patch('/users/:userId', async (req: Request, res: Response): Pr
     const values: any[] = [];
     let idx = 1;
 
-    if (data.name !== undefined) {
+    if (typeof body.name === 'string' && body.name.trim()) {
       fields.push(`name = $${idx++}`);
-      values.push(data.name);
+      values.push(body.name.trim());
     }
-    if (data.role !== undefined) {
+
+    if (body.role === 'SCHOOL_ADMIN' || body.role === 'COUNSELOR') {
       fields.push(`role = $${idx++}`);
-      values.push(data.role);
+      values.push(body.role);
     }
-    if (data.isActive !== undefined) {
+
+    if (typeof body.isActive === 'boolean') {
       fields.push(`is_active = $${idx++}`);
-      values.push(data.isActive);
+      values.push(body.isActive);
     }
-    if (data.password !== undefined) {
-      const hash = await bcrypt.hash(data.password, 10);
+
+    if (typeof body.password === 'string' && body.password.length >= 6) {
+      const hash = await bcrypt.hash(body.password, 10);
       fields.push(`password_hash = $${idx++}`);
       values.push(hash);
     }

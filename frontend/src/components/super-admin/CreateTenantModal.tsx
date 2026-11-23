@@ -397,3 +397,4 @@ export default function CreateTenantModal({ isOpen, onClose, onCreated }: Props)
     </div>
   );
 }
+
