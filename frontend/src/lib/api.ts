@@ -67,6 +67,7 @@ export async function getSuperAdminTenants(): Promise<TenantRecord[]> {
   }
   return res.json();
 }
+export const getTenants = getSuperAdminTenants;
 
 export async function createTenant(payload: any): Promise<{ tenant: TenantRecord; initialAdmin?: TenantUser }> {
   const res = await fetch(`${API_BASE}/super-admin/tenants`, {
@@ -151,6 +152,7 @@ export async function syncTenantNow(tenantId: string): Promise<{ success: boolea
   }
   return data;
 }
+export const triggerTenantSync = syncTenantNow;
 
 export async function impersonateTenant(tenantId: string): Promise<{ success: boolean; token: string; tenant: { id: string; name: string; slug: string } }> {
   const res = await fetch(`${API_BASE}/super-admin/tenants/${tenantId}/impersonate`, {
