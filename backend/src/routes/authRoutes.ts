@@ -1,7 +1,6 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { z } from 'zod';
 import { config } from '../config/index.js';
 import { query } from '../db/index.js';
 import { extractTenantSlug } from '../utils/subdomain.js';
@@ -10,11 +9,6 @@ import { User, Tenant, JWTPayload } from '../types/index.js';
 
 export const authRouter = Router();
 
-const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(1, 'Password is required'),
-});
-
 /**
  * POST /api/auth/login
  * Authenticates user against the resolved tenant (or SUPER_ADMIN on admin slug).
@@ -22,13 +16,18 @@ const loginSchema = z.object({
  */
 authRouter.post('/login', async (req: Request, res: Response): Promise<void> => {
   try {
-    const parseResult = loginSchema.safeParse(req.body);
-    if (!parseResult.success) {
-      res.status(400).json({ error: 'Invalid input', details: parseResult.error.flatten() });
+    const { email, password } = req.body || {};
+
+    if (!email || typeof email !== 'string' || !email.includes('@')) {
+      res.status(400).json({ error: 'Valid email is required' });
       return;
     }
 
-    const { email, password } = parseResult.data;
+    if (!password || typeof password !== 'string' || password.length === 0) {
+      res.status(400).json({ error: 'Password is required' });
+      return;
+    }
+
     const slug = extractTenantSlug(req);
 
     let user: User | null = null;
@@ -40,7 +39,7 @@ authRouter.post('/login', async (req: Request, res: Response): Promise<void> => 
         `SELECT * FROM users
          WHERE LOWER(email) = LOWER($1) AND role = 'SUPER_ADMIN' AND is_active = true
          LIMIT 1`,
-        [email]
+        [email.trim()]
       );
       if (result.rows.length > 0) {
         user = result.rows[0];
@@ -66,7 +65,7 @@ authRouter.post('/login', async (req: Request, res: Response): Promise<void> => 
         `SELECT * FROM users
          WHERE LOWER(email) = LOWER($1) AND tenant_id = $2 AND is_active = true
          LIMIT 1`,
-        [email, tenant.id]
+        [email.trim(), tenant.id]
       );
 
       if (userResult.rows.length > 0) {
@@ -76,7 +75,7 @@ authRouter.post('/login', async (req: Request, res: Response): Promise<void> => 
       // If no subdomain provided (e.g. direct API test), look up user by email directly
       const userResult = await query<User>(
         'SELECT * FROM users WHERE LOWER(email) = LOWER($1) AND is_active = true LIMIT 1',
-        [email]
+        [email.trim()]
       );
       if (userResult.rows.length > 0) {
         user = userResult.rows[0];
