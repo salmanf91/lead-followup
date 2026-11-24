@@ -54,3 +54,73 @@ export interface TenantUser {
   is_active: boolean;
   created_at: string;
 }
+
+export interface DashboardOverview {
+  kpiCards: {
+    totalLeads: number;
+    uniquePeople: number;
+    repeats: number;
+    followedCount: number;
+    followedPercent: number;
+    remainingNotContacted: number;
+    positiveCount: number;
+    positiveRatePercent: number;
+    negativeCount: number;
+    pendingCount: number;
+    replyRatePercent: number;
+    daysToFirstContact: number | null;
+    newLeadsLast7Days: number;
+    goingColdAlertCount: number;
+  };
+  feedbackSplit: {
+    positive: { count: number; percent: number };
+    pending: { count: number; percent: number };
+    negative: { count: number; percent: number };
+    notContacted: { count: number; percent: number };
+    invalidDuplicate: { count: number; percent: number };
+  };
+  pendingBreakdown: {
+    msgNoReply: { count: number; percent: number };
+    calledNoAnswer: { count: number; percent: number };
+    answeredNoDecision: { count: number; percent: number };
+    other: { count: number; percent: number };
+  };
+  funnel: {
+    stage1: { completed: number; openWaiting: number };
+    stage2: { completed: number; openWaiting: number };
+    stage3: { completed: number; openWaiting: number };
+  };
+  campaigns: Array<{
+    id: string;
+    tabName: string;
+    displayOrder: number;
+    totalLeads: number;
+    followedCount: number;
+    followedPercent: number;
+    positiveCount: number;
+    positiveRatePercent: number;
+  }>;
+  dailyIntake: Array<{
+    date: string;
+    count: number;
+  }>;
+  priorityLeads: Array<{
+    id: string;
+    parentName: string;
+    phoneRaw: string | null;
+    phoneNormalized: string | null;
+    grade: string | null;
+    feedbackStatus: string;
+    pendingSubstatus: string | null;
+    campaignName: string;
+    leadDate: string | null;
+    lastUpdatedAt: string;
+    whatsAppUrl: string | null;
+  }>;
+  syncInfo: {
+    lastSyncedAt: string | null;
+    lastSyncError: string | null;
+    dataMode: string;
+    googleSheetId: string | null;
+  };
+}

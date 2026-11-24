@@ -18,5 +18,10 @@ export const config = {
     sameSite: 'lax' as const,
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in ms
   },
+  google: {
+    serviceAccountEmail: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '',
+    privateKey: (process.env.GOOGLE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
+    credentialsJson: process.env.GOOGLE_SERVICE_ACCOUNT_KEY || '',
+    keyFilePath: process.env.GOOGLE_APPLICATION_CREDENTIALS || '',
+  },
 };
-
