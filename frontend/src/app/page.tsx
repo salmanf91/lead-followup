@@ -16,6 +16,7 @@ import {
 import { getTenantConfig, getMe, login, logout } from '../lib/api';
 import { PublicTenantConfig, AuthUser } from '../types';
 import SuperAdminDashboard from '../components/super-admin/SuperAdminDashboard';
+import SchoolDashboard from '../components/school-dashboard/SchoolDashboard';
 
 export default function Home() {
   const [tenantConfig, setTenantConfig] = useState<PublicTenantConfig | null>(null);
@@ -139,6 +140,18 @@ export default function Home() {
     );
   }
 
+  // If user is authenticated (as SCHOOL_ADMIN, COUNSELOR, or SUPER_ADMIN impersonating a school), render the full Client Dashboard!
+  if (currentUser) {
+    return (
+      <SchoolDashboard
+        currentUser={currentUser}
+        tenantConfig={tenantConfig}
+        activeSlug={activeSlug}
+        onLogout={handleLogout}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-[#F8FAFC] text-slate-900 font-sans antialiased">
       {/* Dev Navigation & Subdomain Switcher */}
@@ -239,53 +252,15 @@ export default function Home() {
               )}
             </div>
 
-            {/* Content Area: Authenticated State vs Login Form */}
+            {/* Content Area: Login Form */}
             <div className="p-8">
-              {currentUser ? (
-                <div className="space-y-5">
-                  <div className="bg-emerald-50/90 border border-emerald-200/80 rounded-2xl p-4 text-start">
-                    <div className="flex items-center gap-2">
-                      <UserCheck className="w-4 h-4 text-emerald-600" />
-                      <p className="text-xs font-bold text-emerald-900 uppercase tracking-wider">
-                        Authenticated Session
-                      </p>
-                    </div>
-                    <p className="text-sm font-semibold text-slate-900 mt-2">
-                      {currentUser.name}
-                    </p>
-                    <p className="text-xs text-slate-600 font-mono">{currentUser.email}</p>
-                    <div className="mt-3 flex items-center gap-2">
-                      <span className="text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800">
-                        Role: {currentUser.role}
-                      </span>
-                    </div>
+              <form onSubmit={handleLogin} className="space-y-4">
+                {loginError && (
+                  <div className="p-3 text-xs bg-red-50 border border-red-200 text-red-700 rounded-xl text-start font-medium flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+                    <span>{loginError}</span>
                   </div>
-
-                  {currentUser.role === 'SUPER_ADMIN' && activeSlug !== 'admin' && (
-                    <div className="p-3 bg-purple-50 border border-purple-200 rounded-xl text-start">
-                      <p className="text-[11px] text-purple-900 font-medium">
-                        🛡 You are viewing this school portal in <strong>Super Admin Support Mode</strong>.
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="pt-2">
-                    <button
-                      onClick={handleLogout}
-                      className="w-full py-2.5 px-4 rounded-xl text-xs sm:text-sm font-semibold border border-slate-200 text-slate-700 hover:bg-slate-50 transition shadow-xs"
-                    >
-                      Sign Out
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <form onSubmit={handleLogin} className="space-y-4">
-                  {loginError && (
-                    <div className="p-3 text-xs bg-red-50 border border-red-200 text-red-700 rounded-xl text-start font-medium flex items-center gap-2">
-                      <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
-                      <span>{loginError}</span>
-                    </div>
-                  )}
+                )}
 
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5 text-start">
@@ -335,7 +310,6 @@ export default function Home() {
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 </form>
-              )}
             </div>
           </div>
         )}
