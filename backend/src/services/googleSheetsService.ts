@@ -5,6 +5,7 @@ import fs from 'fs';
 export interface ISheetReader {
   getSpreadsheetTabs(sheetId: string): Promise<string[]>;
   getSheetData(sheetId: string, tabName: string): Promise<string[][]>;
+  getSheetRange?(sheetId: string, range: string): Promise<string[][]>;
   updateSheetCell?(sheetId: string, range: string, value: string): Promise<void>;
 }
 
@@ -93,6 +94,29 @@ export class GoogleSheetsService implements ISheetReader {
     return sheets
       .map((s: any) => s.properties?.title)
       .filter((title: any): title is string => typeof title === 'string' && title.trim().length > 0);
+  }
+
+  /**
+   * Reads a specific cell range from a Google Sheet.
+   */
+  async getSheetRange(sheetId: string, range: string): Promise<string[][]> {
+    const token = await this.getAccessToken();
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(sheetId)}/values/${encodeURIComponent(range)}`;
+
+    const res = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error((err as any).error?.message || `Failed to fetch sheet range ${range} (${res.status})`);
+    }
+
+    const data: any = await res.json();
+    const rows: any[][] = data.values || [];
+    return rows.map((r) => r.map((c) => (c !== undefined && c !== null ? String(c) : '')));
   }
 
   /**

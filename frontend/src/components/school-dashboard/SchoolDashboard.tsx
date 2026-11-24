@@ -24,9 +24,15 @@ import {
   HelpCircle,
   AlertCircle,
   Hash,
+  Download,
+  Upload,
 } from 'lucide-react';
-import { getDashboardOverview, triggerSchoolSync } from '../../lib/api';
+import { getDashboardOverview, triggerSchoolSync, getExportLeadsCsvUrl } from '../../lib/api';
 import { AuthUser, PublicTenantConfig, DashboardOverview } from '../../types';
+import MasterLeadList from './MasterLeadList';
+import LeadDrawer from './LeadDrawer';
+import CsvImportModal from './CsvImportModal';
+import CounselorManagementModal from './CounselorManagementModal';
 
 interface Props {
   currentUser: AuthUser;
@@ -48,6 +54,21 @@ export default function SchoolDashboard({
   const [countdown, setCountdown] = useState<number>(60);
   const [showFormulas, setShowFormulas] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Milestone 5 State: Lead Drawer & School Admin Modals
+  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
+  const [isCsvModalOpen, setIsCsvModalOpen] = useState<boolean>(false);
+  const [isCounselorModalOpen, setIsCounselorModalOpen] = useState<boolean>(false);
+  const [leadFilterStatus, setLeadFilterStatus] = useState<string>('ALL');
+  const [refreshLeadsCounter, setRefreshLeadsCounter] = useState<number>(0);
+
+  const handleFilterStatus = (status: string) => {
+    setLeadFilterStatus(status);
+    const elem = document.getElementById('lead-list');
+    if (elem) {
+      elem.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   // Fetch dashboard data
   const fetchData = useCallback(
@@ -175,6 +196,39 @@ export default function SchoolDashboard({
             >
               <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin text-indigo-600' : ''}`} />
               <span className="hidden sm:inline">{syncing ? 'Syncing...' : 'Sync Now'}</span>
+            </button>
+          )}
+
+          {/* Export CSV Button */}
+          <a
+            href={getExportLeadsCsvUrl(selectedCampaignId, leadFilterStatus)}
+            download
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition shadow-2xs"
+            title="Export filtered leads to CSV"
+          >
+            <Download className="w-3.5 h-3.5 text-slate-500" />
+            <span className="hidden sm:inline">Export CSV</span>
+          </a>
+
+          {/* Import CSV Button */}
+          <button
+            onClick={() => setIsCsvModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition shadow-2xs"
+            title="Import leads from CSV"
+          >
+            <Upload className="w-3.5 h-3.5 text-slate-500" />
+            <span className="hidden sm:inline">Import CSV</span>
+          </button>
+
+          {/* Counselor Management for School Admin */}
+          {(currentUser.role === 'SCHOOL_ADMIN' || currentUser.role === 'SUPER_ADMIN') && (
+            <button
+              onClick={() => setIsCounselorModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl transition shadow-2xs"
+              title="Manage School Counselors"
+            >
+              <Users className="w-3.5 h-3.5 text-indigo-600" />
+              <span className="hidden sm:inline">Counselors</span>
             </button>
           )}
 
@@ -414,8 +468,9 @@ export default function SchoolDashboard({
             {split?.positive && split.positive.percent > 0 && (
               <div
                 style={{ width: `${split.positive.percent}%` }}
-                className="bg-emerald-500 hover:bg-emerald-600 transition-all flex items-center justify-center text-[10px] font-bold text-white"
-                title={`Positive: ${split.positive.count} (${split.positive.percent}%)`}
+                onClick={() => handleFilterStatus('POSITIVE')}
+                className="bg-emerald-500 hover:bg-emerald-600 cursor-pointer transition-all flex items-center justify-center text-[10px] font-bold text-white"
+                title={`Positive: ${split.positive.count} (${split.positive.percent}%) — Click to filter`}
               >
                 {split.positive.percent >= 8 && `${split.positive.percent}%`}
               </div>
@@ -423,8 +478,9 @@ export default function SchoolDashboard({
             {split?.pending && split.pending.percent > 0 && (
               <div
                 style={{ width: `${split.pending.percent}%` }}
-                className="bg-sky-500 hover:bg-sky-600 transition-all flex items-center justify-center text-[10px] font-bold text-white"
-                title={`Pending: ${split.pending.count} (${split.pending.percent}%)`}
+                onClick={() => handleFilterStatus('PENDING')}
+                className="bg-sky-500 hover:bg-sky-600 cursor-pointer transition-all flex items-center justify-center text-[10px] font-bold text-white"
+                title={`Pending: ${split.pending.count} (${split.pending.percent}%) — Click to filter`}
               >
                 {split.pending.percent >= 8 && `${split.pending.percent}%`}
               </div>
@@ -432,8 +488,9 @@ export default function SchoolDashboard({
             {split?.notContacted && split.notContacted.percent > 0 && (
               <div
                 style={{ width: `${split.notContacted.percent}%` }}
-                className="bg-amber-400 hover:bg-amber-500 transition-all flex items-center justify-center text-[10px] font-bold text-white"
-                title={`Not Contacted: ${split.notContacted.count} (${split.notContacted.percent}%)`}
+                onClick={() => handleFilterStatus('NOT_CONTACTED')}
+                className="bg-amber-400 hover:bg-amber-500 cursor-pointer transition-all flex items-center justify-center text-[10px] font-bold text-white"
+                title={`Not Contacted: ${split.notContacted.count} (${split.notContacted.percent}%) — Click to filter`}
               >
                 {split.notContacted.percent >= 8 && `${split.notContacted.percent}%`}
               </div>
@@ -441,8 +498,9 @@ export default function SchoolDashboard({
             {split?.negative && split.negative.percent > 0 && (
               <div
                 style={{ width: `${split.negative.percent}%` }}
-                className="bg-rose-500 hover:bg-rose-600 transition-all flex items-center justify-center text-[10px] font-bold text-white"
-                title={`Negative: ${split.negative.count} (${split.negative.percent}%)`}
+                onClick={() => handleFilterStatus('NEGATIVE')}
+                className="bg-rose-500 hover:bg-rose-600 cursor-pointer transition-all flex items-center justify-center text-[10px] font-bold text-white"
+                title={`Negative: ${split.negative.count} (${split.negative.percent}%) — Click to filter`}
               >
                 {split.negative.percent >= 8 && `${split.negative.percent}%`}
               </div>
@@ -450,8 +508,9 @@ export default function SchoolDashboard({
             {split?.invalidDuplicate && split.invalidDuplicate.percent > 0 && (
               <div
                 style={{ width: `${split.invalidDuplicate.percent}%` }}
-                className="bg-purple-500 hover:bg-purple-600 transition-all flex items-center justify-center text-[10px] font-bold text-white"
-                title={`Invalid/Duplicate: ${split.invalidDuplicate.count} (${split.invalidDuplicate.percent}%)`}
+                onClick={() => handleFilterStatus('INVALID_DUPLICATE')}
+                className="bg-purple-500 hover:bg-purple-600 cursor-pointer transition-all flex items-center justify-center text-[10px] font-bold text-white"
+                title={`Invalid/Duplicate: ${split.invalidDuplicate.count} (${split.invalidDuplicate.percent}%) — Click to filter`}
               >
                 {split.invalidDuplicate.percent >= 8 && `${split.invalidDuplicate.percent}%`}
               </div>
@@ -460,26 +519,41 @@ export default function SchoolDashboard({
 
           {/* Split Bar Legend */}
           <div className="flex flex-wrap items-center gap-4 text-xs pt-1">
-            <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => handleFilterStatus('POSITIVE')}
+              className="flex items-center gap-1.5 hover:text-emerald-700 transition"
+            >
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
               <span className="text-slate-600">Positive: {split?.positive.count || 0} ({split?.positive.percent || 0}%)</span>
-            </div>
-            <div className="flex items-center gap-1.5">
+            </button>
+            <button
+              onClick={() => handleFilterStatus('PENDING')}
+              className="flex items-center gap-1.5 hover:text-sky-700 transition"
+            >
               <span className="w-2.5 h-2.5 rounded-full bg-sky-500" />
               <span className="text-slate-600">Pending: {split?.pending.count || 0} ({split?.pending.percent || 0}%)</span>
-            </div>
-            <div className="flex items-center gap-1.5">
+            </button>
+            <button
+              onClick={() => handleFilterStatus('NOT_CONTACTED')}
+              className="flex items-center gap-1.5 hover:text-amber-700 transition"
+            >
               <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
               <span className="text-slate-600">Not Contacted: {split?.notContacted.count || 0} ({split?.notContacted.percent || 0}%)</span>
-            </div>
-            <div className="flex items-center gap-1.5">
+            </button>
+            <button
+              onClick={() => handleFilterStatus('NEGATIVE')}
+              className="flex items-center gap-1.5 hover:text-rose-700 transition"
+            >
               <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />
               <span className="text-slate-600">Negative: {split?.negative.count || 0} ({split?.negative.percent || 0}%)</span>
-            </div>
-            <div className="flex items-center gap-1.5">
+            </button>
+            <button
+              onClick={() => handleFilterStatus('INVALID_DUPLICATE')}
+              className="flex items-center gap-1.5 hover:text-purple-700 transition"
+            >
               <span className="w-2.5 h-2.5 rounded-full bg-purple-500" />
               <span className="text-slate-600">Duplicate: {split?.invalidDuplicate.count || 0} ({split?.invalidDuplicate.percent || 0}%)</span>
-            </div>
+            </button>
           </div>
         </div>
 
@@ -663,11 +737,12 @@ export default function SchoolDashboard({
             {priorityLeads.map((lead) => (
               <div
                 key={lead.id}
-                className="bg-slate-50/70 border border-slate-200/70 rounded-2xl p-4 flex flex-col justify-between hover:border-slate-300 transition"
+                onClick={() => setSelectedLeadId(lead.id)}
+                className="bg-slate-50/70 border border-slate-200/70 rounded-2xl p-4 flex flex-col justify-between hover:border-indigo-300 hover:shadow-xs transition cursor-pointer group"
               >
                 <div>
                   <div className="flex items-start justify-between gap-2">
-                    <h4 className="text-sm font-bold text-slate-900 truncate" dir="auto">
+                    <h4 className="text-sm font-bold text-slate-900 truncate group-hover:text-indigo-600 transition" dir="auto">
                       {lead.parentName}
                     </h4>
                     <span
@@ -685,7 +760,7 @@ export default function SchoolDashboard({
                   </p>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-slate-200/60 flex items-center justify-between">
+                <div className="mt-4 pt-3 border-t border-slate-200/60 flex items-center justify-between" onClick={(e) => e.stopPropagation()}>
                   {lead.whatsAppUrl ? (
                     <a
                       href={lead.whatsAppUrl}
@@ -745,7 +820,16 @@ export default function SchoolDashboard({
           </div>
         )}
 
-        {/* 10. Collapsible Formula Accordion */}
+        {/* 10. Master Lead Directory & Interactive Table */}
+        <MasterLeadList
+          selectedCampaignId={selectedCampaignId}
+          selectedStatus={leadFilterStatus}
+          onSelectLead={(id) => setSelectedLeadId(id)}
+          onOpenCsvImport={() => setIsCsvModalOpen(true)}
+          refreshTrigger={refreshLeadsCounter}
+        />
+
+        {/* 11. Collapsible Formula Accordion */}
         <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
           <button
             onClick={() => setShowFormulas(!showFormulas)}
@@ -776,6 +860,32 @@ export default function SchoolDashboard({
           )}
         </div>
       </main>
+
+      {/* Slide-Over Follow-Up Lead Drawer */}
+      <LeadDrawer
+        leadId={selectedLeadId}
+        onClose={() => setSelectedLeadId(null)}
+        onLeadUpdated={() => {
+          fetchData(selectedCampaignId, true);
+          setRefreshLeadsCounter((c) => c + 1);
+        }}
+      />
+
+      {/* Bulk CSV Import Modal */}
+      <CsvImportModal
+        isOpen={isCsvModalOpen}
+        onClose={() => setIsCsvModalOpen(false)}
+        onSuccess={() => {
+          fetchData(selectedCampaignId, true);
+          setRefreshLeadsCounter((c) => c + 1);
+        }}
+      />
+
+      {/* Counselor Team Management Modal */}
+      <CounselorManagementModal
+        isOpen={isCounselorModalOpen}
+        onClose={() => setIsCounselorModalOpen(false)}
+      />
 
       <footer className="py-6 text-center text-xs text-slate-400 border-t border-slate-200 bg-white">
         {tenantConfig?.dashboardTitle || 'School Admissions'} · Powered by Multi-Tenant Follow-Up Engine

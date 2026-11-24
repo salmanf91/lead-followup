@@ -5,6 +5,8 @@ import { tenantRouter } from './routes/tenantRoutes.js';
 import { authRouter } from './routes/authRoutes.js';
 import { superAdminRouter } from './routes/superAdminRoutes.js';
 import { dashboardRouter } from './routes/dashboardRoutes.js';
+import { leadRouter } from './routes/leadRoutes.js';
+import { schoolAdminRouter } from './routes/schoolAdminRoutes.js';
 import { tenantResolver } from './middleware/tenantResolver.js';
 import { authenticateJWT, requireRoles } from './middleware/auth.js';
 import { checkDbConnection } from './db/index.js';
@@ -43,6 +45,8 @@ export function createApp(): Express {
   app.use('/api/auth', authRouter);
   app.use('/api/super-admin', authenticateJWT, requireRoles('SUPER_ADMIN'), superAdminRouter);
   app.use('/api/dashboard', authenticateJWT, dashboardRouter);
+  app.use('/api/leads', authenticateJWT, leadRouter);
+  app.use('/api/school-admin', authenticateJWT, requireRoles('SCHOOL_ADMIN', 'SUPER_ADMIN'), schoolAdminRouter);
 
   // 404 handler for unknown API routes
   app.use((_req: Request, res: Response) => {

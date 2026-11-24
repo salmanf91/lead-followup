@@ -37,3 +37,11 @@ export function clearAllDashboardCache(): void {
   cache.clear();
 }
 
+export const dashboardCache = {
+  get: getDashboardCache,
+  set: setDashboardCache,
+  invalidate: invalidateTenantDashboardCache,
+  clear: clearAllDashboardCache,
+};
+
+
