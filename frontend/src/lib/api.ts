@@ -349,13 +349,14 @@ export async function updateSchoolCounselor(
 }
 
 export async function importLeadsCsv(
-  csvText: string
+  csvText: string,
+  campaignName?: string
 ): Promise<{ success: boolean; totalProcessed: number; importedCount: number; duplicateCount: number }> {
   const res = await fetch(`${API_BASE}/school-admin/leads/import-csv`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
-    body: JSON.stringify({ csvText }),
+    body: JSON.stringify({ csvText, campaignName }),
   });
   const data = await res.json();
   if (!res.ok) {

@@ -391,6 +391,45 @@ describe('Milestone 5 — Lead Management, Write-Back & School Admin APIs', () =
       expect(res.body.duplicateCount).toBe(0);
     });
 
+    it('robustly imports CSV with title header row, Remarks column, and trailing empty comma lines', async () => {
+      const complexCsv =
+        `Dhaharan - Aziziya Leads,,,,,,,,,,,,,,,,,,,,,,,,,,\n` +
+        `Sr. no,Date,Name,Email,phone,Grade,City,Followup -1,Followup - 2,Followup - 3,Remarks,,,,,,,,,,,,,,,,\n` +
+        `1,4/11/2026,Ayesha Shahroz,ayeshakashaf35@gmail.com,966501561803,kg,Al khobar,04.11.2026 not intrested,-,-,dead lead,,,,,,,,,,,,,,,,\n` +
+        `2,4/11/2026,Nida Saneen,nidarash07@gmail.com,966534363007,kg,Khobar,08.11.2026 welcome message,15/11/2026 | lives in riyad (Turki),,dead lead,,,,,,,,,,,,,,,,\n` +
+        `,,,,,,,,,,,,,,,,,,,,,,,,,,\n` +
+        `,,,,,,,,,,,,,,,,,,,,,,,,,,\n`;
+
+      (db.query as any).mockImplementation((sql: string, params: any[]) => {
+        if (sql.includes('SELECT id, tab_name FROM campaigns')) {
+          return Promise.resolve({ rows: [] });
+        }
+        if (sql.includes('INSERT INTO campaigns')) {
+          return Promise.resolve({ rows: [{ id: 'camp-csv-detected' }] });
+        }
+        if (sql.includes('SELECT phone_normalized FROM leads')) {
+          return Promise.resolve({ rows: [] });
+        }
+        if (sql.includes('INSERT INTO leads')) {
+          return Promise.resolve({ rows: [{ id: 'lead-csv-detected' }] });
+        }
+        if (sql.includes('INSERT INTO follow_up_notes')) {
+          return Promise.resolve({ rows: [{ id: 'note-csv-detected' }] });
+        }
+        return Promise.resolve({ rows: [] });
+      });
+
+      const res = await request(app)
+        .post('/api/school-admin/leads/import-csv')
+        .set('Cookie', `token=${schoolAdminToken}`)
+        .send({ csvText: complexCsv });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.importedCount).toBe(2);
+      expect(res.body.totalProcessed).toBe(2);
+    });
+
     it('exports tenant leads as RFC 4180 CSV with attachment header', async () => {
       (db.query as any).mockImplementation((sql: string, params: any[]) => {
         if (sql.includes('SELECT') && sql.includes('FROM leads l')) {

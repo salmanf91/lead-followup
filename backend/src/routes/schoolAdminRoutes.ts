@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import { query } from '../db/index.js';
 import { normalizePhone } from '../services/phoneNormalizer.js';
 import { dashboardCache } from '../services/dashboardCache.js';
-import { classifyLeadStatus } from '../services/sheetParser.js';
+import { classifyLeadStatus, parseDate } from '../services/sheetParser.js';
 
 export const schoolAdminRouter = Router();
 
@@ -147,7 +147,7 @@ schoolAdminRouter.patch('/users/:id', async (req: Request, res: Response): Promi
 /**
  * Simple CSV parser supporting quotes, commas, semicolons, and newlines.
  */
-function parseCsv(csvText: string): Array<Record<string, string>> {
+function parseCsv(csvText: string): { rows: Array<Record<string, string>>; detectedCampaign?: string } {
   const lines: string[] = [];
   let currentLine = '';
   let insideQuotes = false;
@@ -173,7 +173,7 @@ function parseCsv(csvText: string): Array<Record<string, string>> {
     lines.push(currentLine);
   }
 
-  if (lines.length < 2) return [];
+  if (lines.length < 1) return { rows: [] };
 
   const splitRow = (row: string): string[] => {
     const items: string[] = [];
@@ -201,19 +201,54 @@ function parseCsv(csvText: string): Array<Record<string, string>> {
     return items;
   };
 
-  const headers = splitRow(lines[0]).map((h) => h.toLowerCase().replace(/[^a-z0-9]/g, ''));
+  // Detect which line is the actual header row
+  const headerKeywords = ['name', 'phone', 'mobile', 'email', 'date', 'grade', 'student', 'parent', 'sr', 'srno', 'feedback', 'status', 'remarks', 'remark', 'followup', 'city'];
+  let headerIndex = 0;
+  let maxKeywordMatches = 0;
+  let detectedCampaign: string | undefined = undefined;
+
+  for (let i = 0; i < Math.min(lines.length, 10); i++) {
+    const cells = splitRow(lines[i]).map((c) => c.toLowerCase().replace(/[^a-z0-9]/g, ''));
+    let matches = 0;
+    for (const cell of cells) {
+      if (headerKeywords.some((kw) => cell.includes(kw))) {
+        matches++;
+      }
+    }
+    if (matches > maxKeywordMatches) {
+      maxKeywordMatches = matches;
+      headerIndex = i;
+    }
+  }
+
+  // If a title row exists prior to the header row (e.g., "Dhaharan - Aziziya Leads")
+  if (headerIndex > 0) {
+    const titleCells = splitRow(lines[0]).filter((c) => c && c.trim().length > 0);
+    if (titleCells.length > 0) {
+      detectedCampaign = titleCells[0].trim();
+    }
+  }
+
+  const rawHeaders = splitRow(lines[headerIndex]);
+  const headers = rawHeaders.map((h) => h.toLowerCase().replace(/[^a-z0-9]/g, ''));
   const rows: Array<Record<string, string>> = [];
 
-  for (let i = 1; i < lines.length; i++) {
+  for (let i = headerIndex + 1; i < lines.length; i++) {
     const values = splitRow(lines[i]);
+    // Skip completely empty rows (e.g. trailing commas from Excel exports)
+    const hasData = values.some((v) => v && v.trim().length > 0);
+    if (!hasData) continue;
+
     const rowObj: Record<string, string> = {};
     for (let h = 0; h < headers.length; h++) {
-      rowObj[headers[h]] = values[h] !== undefined ? values[h] : '';
+      if (headers[h]) {
+        rowObj[headers[h]] = values[h] !== undefined ? values[h] : '';
+      }
     }
     rows.push(rowObj);
   }
 
-  return rows;
+  return { rows, detectedCampaign };
 }
 
 /**
@@ -234,9 +269,12 @@ schoolAdminRouter.post('/leads/import-csv', async (req: Request, res: Response):
     }
 
     let parsedRows: Array<any> = [];
+    let detectedCampaign: string | undefined = undefined;
 
     if (typeof req.body.csvText === 'string') {
-      parsedRows = parseCsv(req.body.csvText);
+      const parsed = parseCsv(req.body.csvText);
+      parsedRows = parsed.rows;
+      detectedCampaign = parsed.detectedCampaign;
     } else if (Array.isArray(req.body.rows)) {
       parsedRows = req.body.rows;
     } else {
@@ -248,6 +286,9 @@ schoolAdminRouter.post('/leads/import-csv', async (req: Request, res: Response):
       res.status(400).json({ error: 'No data rows found in CSV' });
       return;
     }
+
+    // Default campaign name: user-supplied in body > detected title from CSV > fallback 'Admissions'
+    const defaultCampaignName = (req.body.campaignName || detectedCampaign || 'Admissions').trim();
 
     // Cache existing campaigns for this tenant
     const campaignsRes = await query(`SELECT id, tab_name FROM campaigns WHERE tenant_id = $1`, [targetTenantId]);
@@ -266,13 +307,39 @@ schoolAdminRouter.post('/leads/import-csv', async (req: Request, res: Response):
 
     for (const row of parsedRows) {
       // Find row fields flexibly
-      const name = row.name || row.parentname || row.studentname || row.parent || row['parent name'] || row['name'] || '';
-      if (!name || name.trim().length === 0) continue;
+      const name = (
+        row.name ||
+        row.parentname ||
+        row.studentname ||
+        row.parent ||
+        row.student ||
+        row.fullname ||
+        row['parent name'] ||
+        row['name'] ||
+        ''
+      ).trim();
+      if (!name) continue;
 
-      const rawPhone = row.phone || row.phonenumber || row.mobile || row.contact || row['phone'] || '';
+      const rawPhone = (
+        row.phone ||
+        row.phonenumber ||
+        row.mobile ||
+        row.mobilenumber ||
+        row.contact ||
+        row.cell ||
+        row.whatsapp ||
+        row['phone'] ||
+        ''
+      ).trim();
       const phoneNorm = normalizePhone(rawPhone);
-      const grade = row.grade || row.class || row['grade'] || 'General';
-      const campaignName = (row.campaign || row.campaigntab || row.tab || row['campaign'] || 'CSV Import').trim();
+      const grade = (row.grade || row.class || row.standard || row['grade'] || 'General').trim();
+      const campaignName = (
+        row.campaign ||
+        row.campaigntab ||
+        row.tab ||
+        row['campaign'] ||
+        defaultCampaignName
+      ).trim();
 
       // Find or create campaign
       let campaignId = campaignMap.get(campaignName.toLowerCase());
@@ -299,21 +366,37 @@ schoolAdminRouter.post('/leads/import-csv', async (req: Request, res: Response):
 
       // Parse lead date
       let leadDate: Date = new Date();
-      const rawDate = row.date || row.leaddate || row['date'] || '';
+      const rawDate = row.date || row.leaddate || row.entrydate || row['date'] || '';
       if (rawDate) {
-        const parsed = new Date(rawDate);
-        if (!isNaN(parsed.getTime())) {
-          leadDate = parsed;
+        const parsedD = parseDate(rawDate);
+        if (parsedD && !isNaN(parsedD.getTime())) {
+          leadDate = parsedD;
+        } else {
+          const directParsed = new Date(rawDate);
+          if (!isNaN(directParsed.getTime())) {
+            leadDate = directParsed;
+          }
         }
       }
 
-      // Parse feedback
-      const rawFeedback = row.feedback || row.status || row['feedback'] || '';
+      // Parse feedback / status / remarks
+      const rawFeedback = (
+        row.remarks ||
+        row.remark ||
+        row.feedback ||
+        row.status ||
+        row.notes ||
+        row['feedback'] ||
+        ''
+      ).trim();
+
       const followups = [
         row.followup1 || row.followup_1 || row['followup 1'] || row['followup - 1'],
         row.followup2 || row.followup_2 || row['followup 2'] || row['followup - 2'],
         row.followup3 || row.followup_3 || row['followup 3'] || row['followup - 3'],
-      ].filter((f): f is string => typeof f === 'string' && f.trim().length > 0);
+      ]
+        .filter((f): f is string => typeof f === 'string' && f.trim().length > 0 && f.trim() !== '-' && f.trim() !== '--')
+        .map((f) => f.trim());
 
       const classified = classifyLeadStatus(rawFeedback, followups, {});
 
@@ -328,10 +411,10 @@ schoolAdminRouter.post('/leads/import-csv', async (req: Request, res: Response):
         [
           targetTenantId,
           campaignId,
-          name.trim(),
-          rawPhone ? rawPhone.trim() : null,
+          name,
+          rawPhone || null,
           phoneNorm,
-          grade.trim(),
+          grade,
           classified.feedbackStatus,
           classified.pendingSubstatus,
           isDuplicate,
@@ -340,6 +423,18 @@ schoolAdminRouter.post('/leads/import-csv', async (req: Request, res: Response):
       );
 
       const leadId = insertLeadRes.rows[0].id;
+
+      // Also record email / city metadata as initial lead notes if present
+      const metadataNotes: string[] = [];
+      if (row.email && row.email.trim()) metadataNotes.push(`Email: ${row.email.trim()}`);
+      if (row.city && row.city.trim()) metadataNotes.push(`City: ${row.city.trim()}`);
+      if (metadataNotes.length > 0) {
+        await query(
+          `INSERT INTO follow_up_notes (tenant_id, lead_id, stage, note_text, counselor_tag, source, noted_at)
+           VALUES ($1, $2, 0, $3, 'CSV Metadata', 'WEB_APP', NOW())`,
+          [targetTenantId, leadId, metadataNotes.join(' | ')]
+        );
+      }
 
       // Insert follow-up notes from row into database
       for (let s = 0; s < followups.length; s++) {
@@ -370,6 +465,7 @@ schoolAdminRouter.post('/leads/import-csv', async (req: Request, res: Response):
     res.status(500).json({ error: err.message || 'Failed to import CSV' });
   }
 });
+
 
 /**
  * GET /api/school-admin/leads/export-csv
