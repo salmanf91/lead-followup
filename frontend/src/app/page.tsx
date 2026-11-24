@@ -17,6 +17,7 @@ import { getTenantConfig, getMe, login, logout } from '../lib/api';
 import { PublicTenantConfig, AuthUser } from '../types';
 import SuperAdminDashboard from '../components/super-admin/SuperAdminDashboard';
 import SchoolDashboard from '../components/school-dashboard/SchoolDashboard';
+import ChilliPagesLogo from '../components/common/ChilliPagesLogo';
 
 export default function Home() {
   const [tenantConfig, setTenantConfig] = useState<PublicTenantConfig | null>(null);
@@ -45,7 +46,7 @@ export default function Home() {
       if (config.primaryColor) {
         document.documentElement.style.setProperty('--brand-primary', config.primaryColor);
       } else {
-        document.documentElement.style.setProperty('--brand-primary', '#4338CA');
+        document.documentElement.style.setProperty('--brand-primary', '#10457C');
       }
 
       // Check if user is already authenticated
@@ -155,17 +156,19 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col bg-[#F8FAFC] text-slate-900 font-sans antialiased">
       {/* Dev Navigation & Subdomain Switcher */}
-      <header className="bg-slate-950/95 backdrop-blur-md text-slate-300 text-xs py-2 px-6 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80">
-        <div className="flex items-center gap-2.5">
-          <span className="font-semibold text-white flex items-center gap-1.5">
-            <Globe className="w-3.5 h-3.5 text-indigo-400" />
+      <header className="bg-slate-950/95 backdrop-blur-md text-slate-300 text-xs py-2.5 px-6 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80">
+        <div className="flex items-center gap-3">
+          <ChilliPagesLogo height={20} className="h-5 w-auto" />
+          <span className="w-px h-4 bg-slate-800" />
+          <span className="font-semibold text-white flex items-center gap-1.5 text-[11px]">
+            <Globe className="w-3.5 h-3.5 text-[#185EA5]" />
             Portal Switcher:
           </span>
           <button
             onClick={() => handleSlugSwitch('admin')}
-            className={`px-3 py-1 rounded-xl text-xs font-medium transition ${
+            className={`px-3 py-1 rounded-xl text-xs font-semibold transition ${
               activeSlug === 'admin'
-                ? 'bg-indigo-600 text-white shadow-xs'
+                ? 'bg-[#10457C] text-white shadow-xs'
                 : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800'
             }`}
           >
@@ -183,11 +186,11 @@ export default function Home() {
               value={customSlugInput}
               onChange={(e) => setCustomSlugInput(e.target.value)}
               placeholder="e.g. school-slug"
-              className="px-3 py-1 rounded-xl bg-slate-900 text-white placeholder-slate-500 border border-slate-800 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 w-32"
+              className="px-3 py-1 rounded-xl bg-slate-900 text-white placeholder-slate-500 border border-slate-800 text-xs focus:outline-none focus:ring-1 focus:ring-[#10457C] w-32"
             />
             <button
               type="submit"
-              className="px-3 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-medium transition"
+              className="px-3 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition"
             >
               Go
             </button>
@@ -195,7 +198,7 @@ export default function Home() {
         </div>
         <div className="flex items-center gap-2">
           <span className="text-slate-400">Context:</span>
-          <code className="bg-slate-900 border border-slate-800 px-2.5 py-0.5 rounded-lg text-indigo-400 font-mono text-xs">
+          <code className="bg-slate-900 border border-slate-800 px-2.5 py-0.5 rounded-lg text-slate-300 font-mono text-xs">
             {activeSlug}.yourplatform.com
           </code>
         </div>
@@ -204,7 +207,7 @@ export default function Home() {
       {/* Main Tenant Container */}
       <main className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6">
         {error ? (
-          <div className="max-w-md w-full bg-white rounded-3xl shadow-xl border border-slate-200/80 p-8 text-center animate-in fade-in zoom-in-95">
+          <div className="max-w-md w-full bg-white rounded-3xl shadow-bespoke border border-slate-200/90 p-8 text-center animate-in fade-in zoom-in-95">
             <div className="w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-4 font-bold text-xl shadow-xs">
               <AlertCircle className="w-7 h-7" />
             </div>
@@ -214,17 +217,17 @@ export default function Home() {
             <p className="text-xs text-slate-500 mb-6 leading-relaxed">
               {activeSlug === 'admin'
                 ? `Unable to connect to the backend API: ${error}. Please verify the backend service is running.`
-                : `No active tenant was found for slug ${activeSlug}. School tenants are provisioned dynamically via the Super Admin Console.`}
+                : `No active tenant was found for slug "${activeSlug}". School tenants are provisioned dynamically via the Super Admin Console.`}
             </p>
             <button
               onClick={() => handleSlugSwitch('admin')}
-              className="w-full py-2.5 px-4 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white text-xs font-semibold rounded-xl shadow-sm transition"
+              className="w-full py-2.5 px-4 bg-[#10457C] hover:bg-[#0A2B4E] text-white text-xs font-bold rounded-xl shadow-sm transition"
             >
               Retry Super Admin Portal
             </button>
           </div>
         ) : (
-          <div className="max-w-md w-full bg-white rounded-3xl shadow-xl border border-slate-200/80 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          <div className="max-w-md w-full bg-white rounded-3xl shadow-bespoke border border-slate-200/90 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             {/* Header with White-Label Branding */}
             <div className="p-8 text-center border-b border-slate-100 bg-slate-50/40">
               {tenantConfig?.logoUrl ? (
@@ -235,8 +238,8 @@ export default function Home() {
                 />
               ) : (
                 <div
-                  className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 text-white font-bold text-2xl shadow-md"
-                  style={{ backgroundColor: 'var(--brand-primary, #4338CA)' }}
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 text-white font-black text-2xl shadow-sm"
+                  style={{ backgroundColor: 'var(--brand-primary, #10457C)' }}
                 >
                   {tenantConfig?.dashboardTitle?.charAt(0) || 'P'}
                 </div>
@@ -303,8 +306,8 @@ export default function Home() {
                   <button
                     type="submit"
                     disabled={submitting}
-                    style={{ backgroundColor: 'var(--brand-primary, #4338CA)' }}
-                    className="w-full py-2.5 px-4 rounded-xl text-white text-xs sm:text-sm font-semibold hover:opacity-95 transition shadow-sm disabled:opacity-50 flex items-center justify-center gap-2 mt-2"
+                    style={{ backgroundColor: 'var(--brand-primary, #10457C)' }}
+                    className="w-full py-2.5 px-4 rounded-xl text-white text-xs sm:text-sm font-bold hover:opacity-95 transition shadow-sm disabled:opacity-50 flex items-center justify-center gap-2 mt-2"
                   >
                     <span>{submitting ? 'Authenticating...' : 'Sign In to Portal'}</span>
                     <ArrowRight className="w-4 h-4" />
@@ -315,8 +318,9 @@ export default function Home() {
         )}
       </main>
 
-      <footer className="py-4 text-center text-xs text-slate-400">
-        Multi-Tenant Admissions & Campaign Follow-Up Platform
+      <footer className="py-4 text-center text-xs text-slate-400 flex flex-col items-center gap-1">
+        <ChilliPagesLogo height={16} className="h-3.5 w-auto grayscale opacity-40 hover:grayscale-0 hover:opacity-80 transition" />
+        <span>Multi-Tenant Admissions & Campaign Follow-Up Platform</span>
       </footer>
     </div>
   );

@@ -150,7 +150,7 @@ export default function SchoolDashboard({
           ) : (
             <div
               className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-white text-base shadow-xs"
-              style={{ backgroundColor: 'var(--brand-primary, #4338CA)' }}
+              style={{ backgroundColor: 'var(--brand-primary, #10457C)' }}
             >
               {tenantConfig?.dashboardTitle?.charAt(0) || activeSlug.charAt(0).toUpperCase()}
             </div>
@@ -183,7 +183,7 @@ export default function SchoolDashboard({
               Live {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </span>
             <span className="text-slate-300">|</span>
-            <span className="font-mono text-indigo-600 font-semibold">{countdown}s</span>
+            <span className="font-mono text-[#10457C] font-semibold">{countdown}s</span>
           </div>
 
           {/* Sync Button */}
@@ -194,7 +194,7 @@ export default function SchoolDashboard({
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition shadow-2xs disabled:opacity-50"
               title="Sync with Google Sheet immediately"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin text-indigo-600' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin text-[#10457C]' : ''}`} />
               <span className="hidden sm:inline">{syncing ? 'Syncing...' : 'Sync Now'}</span>
             </button>
           )}
@@ -224,10 +224,10 @@ export default function SchoolDashboard({
           {(currentUser.role === 'SCHOOL_ADMIN' || currentUser.role === 'SUPER_ADMIN') && (
             <button
               onClick={() => setIsCounselorModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl transition shadow-2xs"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-[#F0F5FA] hover:bg-[#E1EDF7] text-[#10457C] rounded-xl transition shadow-2xs border border-[#10457C]/10"
               title="Manage School Counselors"
             >
-              <Users className="w-3.5 h-3.5 text-indigo-600" />
+              <Users className="w-3.5 h-3.5 text-[#10457C]" />
               <span className="hidden sm:inline">Counselors</span>
             </button>
           )}
@@ -272,12 +272,12 @@ export default function SchoolDashboard({
         )}
 
         {/* 2. Dynamic Campaign Tabs Bar */}
-        <div className="flex flex-wrap items-center gap-2 bg-white p-2 rounded-2xl border border-slate-200/80 shadow-xs">
+        <div className="flex flex-wrap items-center gap-2 bg-white p-2.5 rounded-2xl border border-slate-200/90 shadow-bespoke">
           <button
             onClick={() => setSelectedCampaignId('ALL')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
               selectedCampaignId === 'ALL'
-                ? 'bg-indigo-600 text-white shadow-xs'
+                ? 'bg-[#10457C] text-white shadow-xs'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
@@ -290,7 +290,7 @@ export default function SchoolDashboard({
               onClick={() => setSelectedCampaignId(camp.id)}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 ${
                 selectedCampaignId === camp.id
-                  ? 'bg-indigo-600 text-white font-semibold shadow-xs'
+                  ? 'bg-[#10457C] text-white font-bold shadow-xs'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >

@@ -156,7 +156,7 @@ export default function CsvImportModal({ isOpen, onClose, onSuccess }: CsvImport
           <button
             onClick={handleImport}
             disabled={loading || !csvText.trim()}
-            className="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 transition shadow-sm"
+            className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#10457C] hover:bg-[#0A2B4E] disabled:opacity-50 transition shadow-xs"
           >
             {loading ? 'Importing Leads...' : 'Start Import'}
           </button>
@@ -165,3 +165,4 @@ export default function CsvImportModal({ isOpen, onClose, onSuccess }: CsvImport
     </div>
   );
 }
+

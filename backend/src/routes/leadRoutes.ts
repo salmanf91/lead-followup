@@ -408,3 +408,4 @@ leadRouter.patch('/:id/status', async (req: Request, res: Response): Promise<voi
     res.status(500).json({ error: err.message || 'Failed to update lead status' });
   }
 });
+

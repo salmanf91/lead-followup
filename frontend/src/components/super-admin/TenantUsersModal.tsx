@@ -158,7 +158,7 @@ export default function TenantUsersModal({ tenant, isOpen, onClose, onUserCountC
             </p>
             <button
               onClick={() => setShowAddForm(!showAddForm)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl shadow-xs transition"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#10457C] hover:bg-[#0A2B4E] text-white text-xs font-semibold rounded-xl shadow-xs transition"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>{showAddForm ? 'Close Form' : 'Enroll New User'}</span>
@@ -169,9 +169,9 @@ export default function TenantUsersModal({ tenant, isOpen, onClose, onUserCountC
           {showAddForm && (
             <form
               onSubmit={handleCreateUser}
-              className="p-4 bg-indigo-50/50 border border-indigo-100 rounded-2xl space-y-3 animate-in fade-in"
+              className="p-4 bg-[#F0F5FA] border border-[#10457C]/15 rounded-2xl space-y-3 animate-in fade-in"
             >
-              <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-900 flex items-center gap-1">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[#10457C] flex items-center gap-1">
                 <span>Enroll Staff Member</span>
               </h3>
 
@@ -238,7 +238,7 @@ export default function TenantUsersModal({ tenant, isOpen, onClose, onUserCountC
                 <button
                   type="submit"
                   disabled={creating}
-                  className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl shadow-xs transition disabled:opacity-50"
+                  className="px-4 py-1.5 bg-[#10457C] hover:bg-[#0A2B4E] text-white text-xs font-semibold rounded-xl shadow-xs transition disabled:opacity-50"
                 >
                   {creating ? 'Saving...' : 'Add User'}
                 </button>
