@@ -117,6 +117,19 @@ export interface DashboardOverview {
     lastUpdatedAt: string;
     whatsAppUrl: string | null;
   }>;
+  recentActivities?: Array<{
+    id: string;
+    leadId: string;
+    leadName: string;
+    leadGrade: string | null;
+    feedbackStatus: string;
+    campaignName: string;
+    authorName: string;
+    stage: number;
+    noteText: string;
+    source: string;
+    notedAt: string;
+  }>;
   syncInfo: {
     lastSyncedAt: string | null;
     lastSyncError: string | null;

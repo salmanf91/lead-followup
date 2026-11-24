@@ -124,6 +124,7 @@ export default function SchoolDashboard({
   const funnel = data?.funnel;
   const campaigns = data?.campaigns || [];
   const priorityLeads = data?.priorityLeads || [];
+  const recentActivities = data?.recentActivities || [];
   const dailyIntake = data?.dailyIntake || [];
   const syncInfo = data?.syncInfo;
 
@@ -132,10 +133,7 @@ export default function SchoolDashboard({
       ? 'All Campaign Tabs'
       : campaigns.find((c) => c.id === selectedCampaignId)?.tabName || 'Selected Campaign';
 
-  // Find max intake count for bar chart scaling
-  const maxIntakeCount = Math.max(...dailyIntake.map((d) => d.count), 5);
-
-  const [activeNavTab, setActiveNavTab] = useState<'overview' | 'followups' | 'positive' | 'campaigns' | 'intake' | 'leadlist'>('overview');
+  const [activeNavTab, setActiveNavTab] = useState<'overview' | 'followups' | 'positive' | 'campaigns' | 'activity' | 'leadlist'>('overview');
 
   const scrollToSection = (sectionId: string, tabKey: any) => {
     setActiveNavTab(tabKey);
@@ -147,147 +145,149 @@ export default function SchoolDashboard({
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col text-slate-900 font-sans antialiased">
-      {/* 1. Sticky Top Navigation Bar */}
-      <header className="bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-6 py-3.5 sticky top-0 z-30 shadow-xs flex flex-wrap items-center justify-between gap-3">
-        {/* School Branding */}
-        <div className="flex items-center gap-3">
-          {tenantConfig?.logoUrl ? (
-            <img
-              src={tenantConfig.logoUrl}
-              alt={tenantConfig.dashboardTitle}
-              className="h-9 w-9 rounded-xl object-contain border border-slate-200 p-0.5 bg-white shadow-xs"
-            />
-          ) : (
-            <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-white text-base shadow-xs"
-              style={{ backgroundColor: 'var(--brand-primary, #10457C)' }}
-            >
-              {tenantConfig?.dashboardTitle?.charAt(0) || activeSlug.charAt(0).toUpperCase()}
-            </div>
-          )}
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-base font-bold tracking-tight text-slate-900">
-                {tenantConfig?.dashboardTitle || `${activeSlug} Admissions`}
-              </h1>
-              {currentUser.role === 'SUPER_ADMIN' && (
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-100 text-purple-800 font-semibold">
-                  Support Impersonation
-                </span>
-              )}
-            </div>
-            <p className="text-[11px] text-slate-400 flex items-center gap-1.5">
-              <span>{tenantConfig?.timezone || 'Asia/Riyadh'}</span>
-              <span>·</span>
-              <code className="font-mono text-slate-500">{activeSlug}.leadfollowup.com</code>
-            </p>
-          </div>
-        </div>
-
-        {/* Live Countdown & User Actions */}
-        <div className="flex items-center gap-3">
-          {/* Live 60s Pulse Pill */}
-          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200 text-xs font-medium text-slate-600">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>
-              Live {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </span>
-            <span className="text-slate-300">|</span>
-            <span className="font-mono text-[#10457C] font-semibold">{countdown}s</span>
-          </div>
-
-          {/* Sync Button */}
-          {syncInfo?.dataMode === 'HYBRID_SHEET' && (
-            <button
-              onClick={handleManualSync}
-              disabled={syncing}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition shadow-2xs disabled:opacity-50"
-              title="Sync with Google Sheet immediately"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin text-[#10457C]' : ''}`} />
-              <span className="hidden sm:inline">{syncing ? 'Syncing...' : 'Sync Now'}</span>
-            </button>
-          )}
-
-          {/* Export CSV Button */}
-          <a
-            href={getExportLeadsCsvUrl(selectedCampaignId, leadFilterStatus)}
-            download
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition shadow-2xs"
-            title="Export filtered leads to CSV"
-          >
-            <Download className="w-3.5 h-3.5 text-slate-500" />
-            <span className="hidden sm:inline">Export CSV</span>
-          </a>
-
-          {/* Import CSV Button */}
-          <button
-            onClick={() => setIsCsvModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition shadow-2xs"
-            title="Import leads from CSV"
-          >
-            <Upload className="w-3.5 h-3.5 text-slate-500" />
-            <span className="hidden sm:inline">Import CSV</span>
-          </button>
-
-          {/* Counselor Management for School Admin */}
-          {(currentUser.role === 'SCHOOL_ADMIN' || currentUser.role === 'SUPER_ADMIN') && (
-            <button
-              onClick={() => setIsCounselorModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-[#F0F5FA] hover:bg-[#E1EDF7] text-[#10457C] rounded-xl transition shadow-2xs border border-[#10457C]/10"
-              title="Manage School Counselors"
-            >
-              <Users className="w-3.5 h-3.5 text-[#10457C]" />
-              <span className="hidden sm:inline">Counselors</span>
-            </button>
-          )}
-
-          {/* User Profile Pill */}
-          <div className="flex items-center gap-2.5 bg-slate-50 border border-slate-200/80 px-3 py-1 rounded-xl">
-            <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center justify-center">
-              {currentUser.name.charAt(0)}
-            </div>
-            <div className="text-start hidden sm:block">
-              <p className="text-xs font-semibold text-slate-800 leading-tight">{currentUser.name}</p>
-              <p className="text-[10px] text-slate-400 font-mono leading-none">{currentUser.role}</p>
+      {/* 1. Combined Sticky Top Navigation Bar (Header + Pill Menu locked together) */}
+      <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
+        <header className="px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3">
+          {/* School Branding */}
+          <div className="flex items-center gap-3">
+            {tenantConfig?.logoUrl ? (
+              <img
+                src={tenantConfig.logoUrl}
+                alt={tenantConfig.dashboardTitle}
+                className="h-9 w-9 rounded-xl object-contain border border-slate-200 p-0.5 bg-white shadow-xs"
+              />
+            ) : (
+              <div
+                className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-white text-base shadow-xs"
+                style={{ backgroundColor: 'var(--brand-primary, #10457C)' }}
+              >
+                {tenantConfig?.dashboardTitle?.charAt(0) || activeSlug.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-base font-bold tracking-tight text-slate-900">
+                  {tenantConfig?.dashboardTitle || `${activeSlug} Admissions`}
+                </h1>
+                {currentUser.role === 'SUPER_ADMIN' && (
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-100 text-purple-800 font-semibold">
+                    Support Impersonation
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-slate-400 flex items-center gap-1.5">
+                <span>{tenantConfig?.timezone || 'Asia/Riyadh'}</span>
+                <span>·</span>
+                <code className="font-mono text-slate-500">{activeSlug}.leadfollowup.com</code>
+              </p>
             </div>
           </div>
 
-          <button
-            onClick={onLogout}
-            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition"
-            title="Sign Out"
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
-        </div>
-      </header>
+          {/* Live Countdown & User Actions */}
+          <div className="flex items-center gap-3">
+            {/* Live 60s Pulse Pill */}
+            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200 text-xs font-medium text-slate-600">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>
+                Live {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </span>
+              <span className="text-slate-300">|</span>
+              <span className="font-mono text-[#10457C] font-semibold">{countdown}s</span>
+            </div>
 
-      {/* 1b. Horizontal Pill Navigation Bar (Screenshot 2) */}
-      <nav className="bg-slate-100/90 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-6 py-2 sticky top-[61px] z-20 shadow-2xs">
-        <div className="max-w-7xl mx-auto flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar">
-          {[
-            { id: 'section-overview', key: 'overview', label: 'Overview' },
-            { id: 'section-followups', key: 'followups', label: 'Follow-ups' },
-            { id: 'section-positive', key: 'positive', label: 'Positive leads' },
-            { id: 'section-campaigns', key: 'campaigns', label: 'Campaigns' },
-            { id: 'section-intake', key: 'intake', label: 'Daily intake' },
-            { id: 'section-leadlist', key: 'leadlist', label: 'Lead list' },
-          ].map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => scrollToSection(tab.id, tab.key)}
-              className={`px-4 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
-                activeNavTab === tab.key
-                  ? 'bg-white text-slate-900 shadow-xs border border-slate-200/90 font-bold'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-              }`}
+            {/* Sync Button */}
+            {syncInfo?.dataMode === 'HYBRID_SHEET' && (
+              <button
+                onClick={handleManualSync}
+                disabled={syncing}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition shadow-2xs disabled:opacity-50"
+                title="Sync with Google Sheet immediately"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin text-[#10457C]' : ''}`} />
+                <span className="hidden sm:inline">{syncing ? 'Syncing...' : 'Sync Now'}</span>
+              </button>
+            )}
+
+            {/* Export CSV Button */}
+            <a
+              href={getExportLeadsCsvUrl(selectedCampaignId, leadFilterStatus)}
+              download
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition shadow-2xs"
+              title="Export filtered leads to CSV"
             >
-              {tab.label}
+              <Download className="w-3.5 h-3.5 text-slate-500" />
+              <span className="hidden sm:inline">Export CSV</span>
+            </a>
+
+            {/* Import CSV Button */}
+            <button
+              onClick={() => setIsCsvModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition shadow-2xs"
+              title="Import leads from CSV"
+            >
+              <Upload className="w-3.5 h-3.5 text-slate-500" />
+              <span className="hidden sm:inline">Import CSV</span>
             </button>
-          ))}
-        </div>
-      </nav>
+
+            {/* Counselor Management for School Admin */}
+            {(currentUser.role === 'SCHOOL_ADMIN' || currentUser.role === 'SUPER_ADMIN') && (
+              <button
+                onClick={() => setIsCounselorModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-[#F0F5FA] hover:bg-[#E1EDF7] text-[#10457C] rounded-xl transition shadow-2xs border border-[#10457C]/10"
+                title="Manage School Counselors"
+              >
+                <Users className="w-3.5 h-3.5 text-[#10457C]" />
+                <span className="hidden sm:inline">Counselors</span>
+              </button>
+            )}
+
+            {/* User Profile Pill */}
+            <div className="flex items-center gap-2.5 bg-slate-50 border border-slate-200/80 px-3 py-1 rounded-xl">
+              <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center justify-center">
+                {currentUser.name.charAt(0)}
+              </div>
+              <div className="text-start hidden sm:block">
+                <p className="text-xs font-semibold text-slate-800 leading-tight">{currentUser.name}</p>
+                <p className="text-[10px] text-slate-400 font-mono leading-none">{currentUser.role}</p>
+              </div>
+            </div>
+
+            <button
+              onClick={onLogout}
+              className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition"
+              title="Sign Out"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+        </header>
+
+        {/* 1b. Horizontal Pill Navigation Bar */}
+        <nav className="bg-slate-50/90 border-t border-slate-200/60 px-4 sm:px-6 py-2">
+          <div className="max-w-7xl mx-auto flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar">
+            {[
+              { id: 'section-overview', key: 'overview', label: 'Overview' },
+              { id: 'section-followups', key: 'followups', label: 'Follow-ups' },
+              { id: 'section-positive', key: 'positive', label: 'Positive leads' },
+              { id: 'section-campaigns', key: 'campaigns', label: 'Campaigns' },
+              { id: 'section-activity', key: 'activity', label: 'Recent activity' },
+              { id: 'section-leadlist', key: 'leadlist', label: 'Lead list' },
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => scrollToSection(tab.id, tab.key)}
+                className={`px-4 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+                  activeNavTab === tab.key
+                    ? 'bg-white text-slate-900 shadow-xs border border-slate-200/90 font-bold'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </nav>
+      </div>
 
       {/* Main Content */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
@@ -885,46 +885,118 @@ export default function SchoolDashboard({
           </div>
         </div>
 
-        {/* 9. Daily Intake Timeline Chart */}
-        {dailyIntake.length > 0 && (
-          <div id="section-intake" className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5 text-indigo-600" />
-              <span>Daily Lead Intake Trend (Past 30 Days)</span>
-            </h3>
+        {/* 9. Recent Follow-Up Activity & Counselor Notes Stream (Replaces legacy intake trend) */}
+        <div id="section-activity" className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <Activity className="w-4 h-4 text-[#10457C]" />
+                <span>Recent Follow-Up Activity & Counselor Notes</span>
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Live stream of counselor touches, logged follow-up calls, and interaction notes
+              </p>
+            </div>
+            <span className="text-xs font-mono text-slate-500 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200/60 font-medium">
+              {recentActivities.length} recent {recentActivities.length === 1 ? 'touch' : 'touches'}
+            </span>
+          </div>
 
-            <div className="h-44 flex items-end gap-2 pt-6 pb-2 overflow-x-auto">
-              {dailyIntake.map((d) => {
-                const heightPercent = Math.max(12, Math.round((d.count / maxIntakeCount) * 100));
+          {recentActivities.length === 0 ? (
+            <div className="py-8 text-center text-slate-400 text-xs flex flex-col items-center justify-center gap-2">
+              <MessageCircle className="w-8 h-8 text-slate-300" />
+              <p className="font-semibold text-slate-600">No counselor follow-up notes logged yet.</p>
+              <p className="text-[11px] text-slate-400">
+                Notes logged during calls or imported from sheets will stream here automatically.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+              {recentActivities.map((act) => {
+                const stageColor =
+                  act.stage === 1
+                    ? 'bg-blue-50 text-blue-700 border-blue-200'
+                    : act.stage === 2
+                    ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                    : act.stage === 3
+                    ? 'bg-purple-50 text-purple-700 border-purple-200'
+                    : 'bg-slate-50 text-slate-700 border-slate-200';
+
+                const statusColor =
+                  act.feedbackStatus === 'POSITIVE'
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : act.feedbackStatus === 'PENDING'
+                    ? 'bg-amber-50 text-amber-700 border-amber-200'
+                    : act.feedbackStatus === 'NEGATIVE'
+                    ? 'bg-rose-50 text-rose-700 border-rose-200'
+                    : 'bg-slate-50 text-slate-600 border-slate-200';
+
                 return (
-                  <div key={d.date} className="flex-1 h-36 min-w-[32px] flex flex-col justify-end items-center gap-1 group">
-                    <span className="text-[10px] font-bold text-slate-700 font-mono opacity-0 group-hover:opacity-100 transition">
-                      {d.count}
-                    </span>
-                    <div className="w-full flex-1 flex items-end">
-                      <div
-                        style={{ height: `${heightPercent}%` }}
-                        className="w-full bg-[#10457C] group-hover:bg-[#DA2C38] rounded-t-md transition-all shadow-2xs"
-                        title={`${d.date}: ${d.count} leads`}
-                      />
+                  <div
+                    key={act.id}
+                    className="p-3.5 rounded-xl border border-slate-200/80 bg-slate-50/50 hover:bg-white hover:border-[#10457C]/40 hover:shadow-xs transition flex flex-col justify-between gap-2.5"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <button
+                          onClick={() => setSelectedLeadId(act.leadId)}
+                          className="font-bold text-xs text-slate-900 hover:text-[#10457C] hover:underline text-start"
+                        >
+                          {act.leadName}
+                        </button>
+                        <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mt-0.5">
+                          <span>{act.campaignName}</span>
+                          {act.leadGrade && (
+                            <>
+                              <span>·</span>
+                              <span>{act.leadGrade}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${stageColor}`}>
+                          {act.stage > 0 ? `Follow-up ${act.stage}` : 'Initial Note'}
+                        </span>
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${statusColor}`}>
+                          {act.feedbackStatus}
+                        </span>
+                      </div>
                     </div>
-                    <span className="text-[9px] text-slate-500 font-medium truncate max-w-[42px]">
-                      {(() => {
-                        const parts = d.date.split('-');
-                        if (parts.length === 3) {
-                          const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                          const mIdx = parseInt(parts[1], 10) - 1;
-                          if (mIdx >= 0 && mIdx < 12) return `${months[mIdx]} ${parts[2]}`;
-                        }
-                        return d.date.slice(5);
-                      })()}
-                    </span>
+
+                    <p className="text-xs text-slate-700 bg-white p-2.5 rounded-lg border border-slate-200/60 leading-relaxed font-sans">
+                      "{act.noteText}"
+                    </p>
+
+                    <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-100">
+                      <div className="flex items-center gap-1.5">
+                        <Users className="w-3 h-3 text-slate-400" />
+                        <span className="font-medium text-slate-600">{act.authorName}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span>
+                          {new Date(act.notedAt).toLocaleDateString([], {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </span>
+                        <button
+                          onClick={() => setSelectedLeadId(act.leadId)}
+                          className="text-[11px] font-semibold text-[#10457C] hover:underline"
+                        >
+                          View Lead →
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 );
               })}
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* 10. Master Lead Directory & Interactive Table */}
         <div id="section-leadlist">
