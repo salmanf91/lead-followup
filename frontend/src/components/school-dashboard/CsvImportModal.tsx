@@ -11,6 +11,7 @@ interface CsvImportModalProps {
 
 export default function CsvImportModal({ isOpen, onClose, onSuccess }: CsvImportModalProps) {
   const [csvText, setCsvText] = useState<string>('');
+  const [campaignName, setCampaignName] = useState<string>('');
   const [fileName, setFileName] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,6 +29,12 @@ export default function CsvImportModal({ isOpen, onClose, onSuccess }: CsvImport
     setFileName(file.name);
     setError(null);
     setResult(null);
+
+    // Auto-populate campaign name from file name if blank
+    if (!campaignName.trim()) {
+      const cleanName = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+      setCampaignName(cleanName);
+    }
 
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -49,7 +56,7 @@ export default function CsvImportModal({ isOpen, onClose, onSuccess }: CsvImport
     setLoading(true);
     setError(null);
     try {
-      const res = await importLeadsCsv(csvText.trim());
+      const res = await importLeadsCsv(csvText.trim(), campaignName.trim() || undefined);
       setResult({
         totalProcessed: res.totalProcessed,
         importedCount: res.importedCount,
@@ -104,6 +111,23 @@ export default function CsvImportModal({ isOpen, onClose, onSuccess }: CsvImport
               </p>
             </div>
           )}
+
+          {/* Campaign Name Field */}
+          <div>
+            <label className="block font-semibold text-slate-700 mb-1">
+              Campaign / Tab Name <span className="text-slate-400 font-normal">(Optional)</span>
+            </label>
+            <input
+              type="text"
+              value={campaignName}
+              onChange={(e) => setCampaignName(e.target.value)}
+              placeholder="e.g. Dhaharan - Aziziya Leads or Admissions 2026-27"
+              className="w-full text-xs p-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50"
+            />
+            <p className="text-[10px] text-slate-400 mt-1">
+              If blank, automatically detected from the CSV title row or set to Admissions.
+            </p>
+          </div>
 
           {/* File Upload Zone */}
           <div>
