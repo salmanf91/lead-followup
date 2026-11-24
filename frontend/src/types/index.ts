@@ -124,3 +124,41 @@ export interface DashboardOverview {
     googleSheetId: string | null;
   };
 }
+
+export interface LeadNote {
+  id: string;
+  stage: number;
+  note_text: string;
+  counselor_tag?: string | null;
+  source: 'GOOGLE_SHEET' | 'WEB_APP';
+  noted_at: string;
+}
+
+export interface LeadRecord {
+  id: string;
+  tenant_id: string;
+  campaign_id: string;
+  campaign_tab: string;
+  parent_name: string;
+  phone_raw: string | null;
+  phone_normalized: string | null;
+  grade: string | null;
+  feedback_status: 'POSITIVE' | 'PENDING' | 'NEGATIVE' | 'NOT_CONTACTED' | 'INVALID_DUPLICATE';
+  pending_substatus: 'MSG_NO_REPLY' | 'CALLED_NO_ANSWER' | 'ANSWERED_NO_DECISION' | 'OTHER' | null;
+  is_duplicate: boolean;
+  lead_date: string | null;
+  first_contact_at: string | null;
+  last_updated_at: string;
+  status_updated_by_app: boolean;
+  notes_count: number;
+  latest_note?: LeadNote | null;
+}
+
+export interface LeadsListResponse {
+  leads: LeadRecord[];
+  total: number;
+  page: number;
+  totalPages: number;
+  limit: number;
+}
+
