@@ -1,44 +1,43 @@
-import { PublicTenantConfig, AuthUser, TenantRecord, TenantUser } from '../types';
+import { PublicTenantConfig, AuthUser, TenantRecord, TenantUser, DashboardOverview } from '../types';
 
-const API_BASE = '/api';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
-export async function getTenantConfig(subdomain?: string): Promise<PublicTenantConfig> {
-  const headers: Record<string, string> = {};
-  if (subdomain) {
-    headers['X-Tenant-Slug'] = subdomain;
-  }
+export async function getTenantConfig(subdomain: string): Promise<PublicTenantConfig> {
   const res = await fetch(`${API_BASE}/tenant/config`, {
-    headers,
+    headers: {
+      'x-forwarded-host': `${subdomain}.leadfollowup.com`,
+    },
     credentials: 'include',
   });
   if (!res.ok) {
-    throw new Error(res.status === 404 ? 'School not found' : 'Failed to load school config');
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to load school configuration');
   }
   return res.json();
 }
 
-export async function login(email: string, password: string, subdomain?: string): Promise<{ user: AuthUser; token?: string }> {
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-  if (subdomain) {
-    headers['X-Tenant-Slug'] = subdomain;
-  }
+export async function login(
+  email: string,
+  password: string,
+  subdomain: string
+): Promise<{ user: AuthUser }> {
   const res = await fetch(`${API_BASE}/auth/login`, {
     method: 'POST',
-    headers,
+    headers: {
+      'Content-Type': 'application/json',
+      'x-forwarded-host': `${subdomain}.leadfollowup.com`,
+    },
     credentials: 'include',
     body: JSON.stringify({ email, password }),
   });
-
   const data = await res.json();
   if (!res.ok) {
-    throw new Error(data.error || 'Login failed');
+    throw new Error(data.error || 'Authentication failed');
   }
   return data;
 }
 
-export async function getMe(): Promise<{ user: AuthUser; tenant?: any }> {
+export async function getMe(): Promise<{ user: AuthUser; tenantConfig: PublicTenantConfig }> {
   const res = await fetch(`${API_BASE}/auth/me`, {
     credentials: 'include',
   });
@@ -162,6 +161,50 @@ export async function impersonateTenant(tenantId: string): Promise<{ success: bo
   const data = await res.json();
   if (!res.ok) {
     throw new Error(data.error || 'Failed to impersonate tenant');
+  }
+  return data;
+}
+
+// ================= Dashboard Analytics APIs =================
+
+export async function getDashboardOverview(campaignId?: string, fresh = false): Promise<DashboardOverview> {
+  const params = new URLSearchParams();
+  if (campaignId && campaignId !== 'ALL') {
+    params.set('campaignId', campaignId);
+  }
+  if (fresh) {
+    params.set('fresh', 'true');
+  }
+
+  const qs = params.toString() ? `?${params.toString()}` : '';
+  const res = await fetch(`${API_BASE}/dashboard/overview${qs}`, {
+    credentials: 'include',
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || 'Failed to load dashboard overview');
+  }
+  return res.json();
+}
+
+export async function getDashboardCampaigns(): Promise<Array<{ id: string; tab_name: string; display_order: number }>> {
+  const res = await fetch(`${API_BASE}/dashboard/campaigns`, {
+    credentials: 'include',
+  });
+  if (!res.ok) {
+    throw new Error('Failed to fetch campaigns');
+  }
+  return res.json();
+}
+
+export async function triggerSchoolSync(): Promise<{ success: boolean; message: string }> {
+  const res = await fetch(`${API_BASE}/dashboard/sync-now`, {
+    method: 'POST',
+    credentials: 'include',
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || 'Sync failed');
   }
   return data;
 }

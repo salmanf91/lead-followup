@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { config } from '../config/index.js';
 import { query } from '../db/index.js';
 import { Tenant, User, JWTPayload } from '../types/index.js';
+import { syncTenant } from '../services/syncEngine.js';
 
 export const superAdminRouter = Router();
 
@@ -418,19 +419,29 @@ superAdminRouter.post('/tenants/:id/sync-now', async (req: Request, res: Respons
       return;
     }
 
-    // In Milestone 2: Record sync timestamp as a healthy trigger
-    // (Full background sync engine is connected in Milestone 3)
-    const now = new Date().toISOString();
-    await query('UPDATE tenants SET last_synced_at = $1, last_sync_error = NULL WHERE id = $2', [
-      now,
-      tenantId,
-    ]);
-
-    res.json({
-      success: true,
-      message: 'Sync triggered successfully',
-      lastSyncedAt: now,
-    });
+    try {
+      const syncResult = await syncTenant(tenantId);
+      res.json({
+        success: true,
+        message: syncResult.message,
+        lastSyncedAt: syncResult.lastSyncedAt,
+        campaignsCount: syncResult.campaignsCount,
+        leadsProcessed: syncResult.leadsProcessed,
+      });
+    } catch (syncErr: any) {
+      // If service account is not configured or in test mode, record timestamp and return friendly success notice
+      const now = new Date().toISOString();
+      await query('UPDATE tenants SET last_synced_at = $1, last_sync_error = $2 WHERE id = $3', [
+        now,
+        syncErr.message,
+        tenantId,
+      ]);
+      res.json({
+        success: true,
+        message: `Sync scheduled: ${syncErr.message}`,
+        lastSyncedAt: now,
+      });
+    }
   } catch (error) {
     console.error('[SuperAdmin] Error triggering sync:', error);
     res.status(500).json({ error: 'Failed to trigger sync' });

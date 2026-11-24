@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser';
 import { tenantRouter } from './routes/tenantRoutes.js';
 import { authRouter } from './routes/authRoutes.js';
 import { superAdminRouter } from './routes/superAdminRoutes.js';
+import { dashboardRouter } from './routes/dashboardRoutes.js';
 import { tenantResolver } from './middleware/tenantResolver.js';
 import { authenticateJWT, requireRoles } from './middleware/auth.js';
 import { checkDbConnection } from './db/index.js';
@@ -41,6 +42,7 @@ export function createApp(): Express {
   app.use('/api/tenant', tenantRouter);
   app.use('/api/auth', authRouter);
   app.use('/api/super-admin', authenticateJWT, requireRoles('SUPER_ADMIN'), superAdminRouter);
+  app.use('/api/dashboard', authenticateJWT, dashboardRouter);
 
   // 404 handler for unknown API routes
   app.use((_req: Request, res: Response) => {
