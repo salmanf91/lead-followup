@@ -908,8 +908,16 @@ export default function SchoolDashboard({
                         title={`${d.date}: ${d.count} leads`}
                       />
                     </div>
-                    <span className="text-[9px] text-slate-400 font-mono truncate max-w-[36px]">
-                      {d.date.slice(5)}
+                    <span className="text-[9px] text-slate-500 font-medium truncate max-w-[42px]">
+                      {(() => {
+                        const parts = d.date.split('-');
+                        if (parts.length === 3) {
+                          const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                          const mIdx = parseInt(parts[1], 10) - 1;
+                          if (mIdx >= 0 && mIdx < 12) return `${months[mIdx]} ${parts[2]}`;
+                        }
+                        return d.date.slice(5);
+                      })()}
                     </span>
                   </div>
                 );
