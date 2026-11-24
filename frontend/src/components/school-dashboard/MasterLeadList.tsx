@@ -296,7 +296,7 @@ export default function MasterLeadList({
               />
               <span className="flex items-center gap-1 text-rose-700">
                 <span className="w-2 h-2 rounded-full bg-rose-500" />
-                No Update $\ge$ 3 Days
+                No Update in 3+ Days
               </span>
             </label>
           </div>

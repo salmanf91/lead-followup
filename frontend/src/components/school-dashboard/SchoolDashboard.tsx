@@ -135,6 +135,16 @@ export default function SchoolDashboard({
   // Find max intake count for bar chart scaling
   const maxIntakeCount = Math.max(...dailyIntake.map((d) => d.count), 5);
 
+  const [activeNavTab, setActiveNavTab] = useState<'overview' | 'followups' | 'positive' | 'campaigns' | 'intake' | 'leadlist'>('overview');
+
+  const scrollToSection = (sectionId: string, tabKey: any) => {
+    setActiveNavTab(tabKey);
+    const el = document.getElementById(sectionId);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col text-slate-900 font-sans antialiased">
       {/* 1. Sticky Top Navigation Bar */}
@@ -253,6 +263,32 @@ export default function SchoolDashboard({
         </div>
       </header>
 
+      {/* 1b. Horizontal Pill Navigation Bar (Screenshot 2) */}
+      <nav className="bg-slate-100/90 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-6 py-2 sticky top-[61px] z-20 shadow-2xs">
+        <div className="max-w-7xl mx-auto flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar">
+          {[
+            { id: 'section-overview', key: 'overview', label: 'Overview' },
+            { id: 'section-followups', key: 'followups', label: 'Follow-ups' },
+            { id: 'section-positive', key: 'positive', label: 'Positive leads' },
+            { id: 'section-campaigns', key: 'campaigns', label: 'Campaigns' },
+            { id: 'section-intake', key: 'intake', label: 'Daily intake' },
+            { id: 'section-leadlist', key: 'leadlist', label: 'Lead list' },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => scrollToSection(tab.id, tab.key)}
+              className={`px-4 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+                activeNavTab === tab.key
+                  ? 'bg-white text-slate-900 shadow-xs border border-slate-200/90 font-bold'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </nav>
+
       {/* Main Content */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
         {/* Toast Alert */}
@@ -329,6 +365,7 @@ export default function SchoolDashboard({
         </div>
 
         {/* 3. Primary KPI Cards Grid */}
+        <div id="section-overview" className="space-y-6">
         <div className="grid grid-cols-2 lg:grid-cols-6 gap-3.5 sm:gap-4">
           {/* Total Leads */}
           <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs hover:shadow-md transition">
@@ -556,69 +593,127 @@ export default function SchoolDashboard({
             </button>
           </div>
         </div>
+        </div>
 
-        {/* 6. Two-Column Layout: Stage Funnel & Pending Breakdown */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Follow-up Progress Funnel */}
-          <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-              <Layers className="w-3.5 h-3.5 text-indigo-600" />
-              <span>Follow-Up Stage Funnel</span>
-            </h3>
+        {/* 6. Follow-up Progress Grid (Matching Screenshot 4) & Pending Breakdown */}
+        <div id="section-followups" className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Follow-up Progress Bars (Screenshot 4) */}
+          <div className="lg:col-span-7 bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-4">
+            <div>
+              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                <span>Follow-up progress</span>
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                How many leads have an entry in each follow-up column. Click a stage to list the open leads still waiting for it.
+              </p>
+            </div>
 
-            <div className="space-y-3">
-              {/* Step 1: Followup 1 */}
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/60 flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-semibold text-slate-800">Stage 1 (Initial Contact)</p>
-                  <p className="text-[11px] text-slate-400">First call or message logged</p>
+            <div className="space-y-3.5 pt-2">
+              {/* Row 1: Leads received */}
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-2 rounded-xl hover:bg-slate-50/70 transition">
+                <div className="w-28 shrink-0">
+                  <p className="text-xs font-bold text-slate-900">Leads received</p>
+                  <p className="text-[11px] text-slate-400">all rows</p>
                 </div>
-                <div className="text-end">
-                  <span className="text-sm font-bold text-indigo-600">
-                    {funnel?.stage1.completed || 0} completed
-                  </span>
-                  <span className="text-[10px] text-slate-400 block">
-                    {funnel?.stage1.openWaiting || 0} awaiting
-                  </span>
+                <div className="flex-1 bg-slate-100 rounded-full h-7 p-0.5 flex items-center">
+                  <div
+                    style={{ width: '100%' }}
+                    className="h-full bg-[#10457C] text-white rounded-full flex items-center justify-end pe-3 text-xs font-bold shadow-xs transition-all"
+                  >
+                    {kpis?.totalLeads || 0}
+                  </div>
+                </div>
+                <div className="w-48 shrink-0 text-start sm:text-end text-xs text-slate-600">
+                  <strong className="text-slate-900 font-bold">100%</strong> of leads
                 </div>
               </div>
 
-              {/* Step 2: Followup 2 */}
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/60 flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-semibold text-slate-800">Stage 2 (Nurturing Touch)</p>
-                  <p className="text-[11px] text-slate-400">Follow-up reminder or discussion</p>
+              {/* Row 2: Followup - 1 */}
+              <div
+                onClick={() => scrollToSection('section-leadlist', 'leadlist')}
+                className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-2 rounded-xl hover:bg-slate-50/70 cursor-pointer transition group"
+              >
+                <div className="w-28 shrink-0">
+                  <p className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 transition">Followup - 1</p>
+                  <p className="text-[11px] text-slate-400">first contact</p>
                 </div>
-                <div className="text-end">
-                  <span className="text-sm font-bold text-indigo-600">
-                    {funnel?.stage2.completed || 0} completed
-                  </span>
-                  <span className="text-[10px] text-slate-400 block">
-                    {funnel?.stage2.openWaiting || 0} awaiting
-                  </span>
+                <div className="flex-1 bg-slate-100 rounded-full h-7 p-0.5 flex items-center">
+                  <div
+                    style={{
+                      width: `${kpis?.totalLeads ? Math.max(10, Math.round(((funnel?.stage1.completed || 0) / kpis.totalLeads) * 100)) : 0}%`,
+                    }}
+                    className="h-full bg-[#10457C] text-white rounded-full flex items-center justify-end pe-3 text-xs font-bold shadow-xs transition-all group-hover:bg-[#0A2B4E]"
+                  >
+                    {funnel?.stage1.completed || 0}
+                  </div>
+                </div>
+                <div className="w-48 shrink-0 text-start sm:text-end text-xs text-slate-600">
+                  <strong className="text-slate-900 font-bold">
+                    {kpis?.totalLeads ? Math.round(((funnel?.stage1.completed || 0) / kpis.totalLeads) * 100) : 0}%
+                  </strong>{' '}
+                  of leads {funnel?.stage1.openWaiting ? `· ${funnel.stage1.openWaiting} open waiting` : ''}
                 </div>
               </div>
 
-              {/* Step 3: Followup 3 */}
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/60 flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-semibold text-slate-800">Stage 3 (Final Decision)</p>
-                  <p className="text-[11px] text-slate-400">Campus visit or enrollment closure</p>
+              {/* Row 3: Followup - 2 */}
+              <div
+                onClick={() => scrollToSection('section-leadlist', 'leadlist')}
+                className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-2 rounded-xl hover:bg-slate-50/70 cursor-pointer transition group"
+              >
+                <div className="w-28 shrink-0">
+                  <p className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 transition">Followup - 2</p>
+                  <p className="text-[11px] text-slate-400">second contact</p>
                 </div>
-                <div className="text-end">
-                  <span className="text-sm font-bold text-indigo-600">
-                    {funnel?.stage3.completed || 0} completed
-                  </span>
-                  <span className="text-[10px] text-slate-400 block">
-                    {funnel?.stage3.openWaiting || 0} awaiting
-                  </span>
+                <div className="flex-1 bg-slate-100 rounded-full h-7 p-0.5 flex items-center">
+                  <div
+                    style={{
+                      width: `${kpis?.totalLeads ? Math.max(10, Math.round(((funnel?.stage2.completed || 0) / kpis.totalLeads) * 100)) : 0}%`,
+                    }}
+                    className="h-full bg-[#10457C] text-white rounded-full flex items-center justify-end pe-3 text-xs font-bold shadow-xs transition-all group-hover:bg-[#0A2B4E]"
+                  >
+                    {funnel?.stage2.completed || 0}
+                  </div>
+                </div>
+                <div className="w-48 shrink-0 text-start sm:text-end text-xs text-slate-600">
+                  <strong className="text-slate-900 font-bold">
+                    {kpis?.totalLeads ? Math.round(((funnel?.stage2.completed || 0) / kpis.totalLeads) * 100) : 0}%
+                  </strong>{' '}
+                  of leads {funnel?.stage2.openWaiting ? `· ${funnel.stage2.openWaiting} open waiting` : ''}
+                </div>
+              </div>
+
+              {/* Row 4: Followup - 3 */}
+              <div
+                onClick={() => scrollToSection('section-leadlist', 'leadlist')}
+                className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-2 rounded-xl hover:bg-slate-50/70 cursor-pointer transition group"
+              >
+                <div className="w-28 shrink-0">
+                  <p className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 transition">Followup - 3</p>
+                  <p className="text-[11px] text-slate-400">third contact</p>
+                </div>
+                <div className="flex-1 bg-slate-100 rounded-full h-7 p-0.5 flex items-center">
+                  <div
+                    style={{
+                      width: `${kpis?.totalLeads ? Math.max(10, Math.round(((funnel?.stage3.completed || 0) / kpis.totalLeads) * 100)) : 0}%`,
+                    }}
+                    className="h-full bg-[#10457C] text-white rounded-full flex items-center justify-end pe-3 text-xs font-bold shadow-xs transition-all group-hover:bg-[#0A2B4E]"
+                  >
+                    {funnel?.stage3.completed || 0}
+                  </div>
+                </div>
+                <div className="w-48 shrink-0 text-start sm:text-end text-xs text-slate-600">
+                  <strong className="text-slate-900 font-bold">
+                    {kpis?.totalLeads ? Math.round(((funnel?.stage3.completed || 0) / kpis.totalLeads) * 100) : 0}%
+                  </strong>{' '}
+                  of leads {funnel?.stage3.openWaiting ? `· ${funnel.stage3.openWaiting} open waiting` : ''}
                 </div>
               </div>
             </div>
           </div>
 
           {/* Pending Sub-Status Breakdown */}
-          <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-4">
+          <div className="lg:col-span-5 bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-4">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
               <Clock className="w-3.5 h-3.5 text-sky-600" />
               <span>Pending Leads Reasons Breakdown</span>
@@ -652,9 +747,10 @@ export default function SchoolDashboard({
             </div>
           </div>
         </div>
+        </div>
 
         {/* 7. Campaign Performance Matrix */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+        <div id="section-campaigns" className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
           <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
               <FileSpreadsheet className="w-3.5 h-3.5 text-indigo-600" />
@@ -717,7 +813,7 @@ export default function SchoolDashboard({
         </div>
 
         {/* 8. Priority Leads to Close (WhatsApp Action Cards) */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-4">
+        <div id="section-positive" className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
@@ -791,7 +887,7 @@ export default function SchoolDashboard({
 
         {/* 9. Daily Intake Timeline Chart */}
         {dailyIntake.length > 0 && (
-          <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-4">
+          <div id="section-intake" className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-4">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
               <Calendar className="w-3.5 h-3.5 text-indigo-600" />
               <span>Daily Lead Intake Trend (Past 30 Days)</span>
@@ -812,8 +908,16 @@ export default function SchoolDashboard({
                         title={`${d.date}: ${d.count} leads`}
                       />
                     </div>
-                    <span className="text-[9px] text-slate-400 font-mono truncate max-w-[36px]">
-                      {d.date.slice(5)}
+                    <span className="text-[9px] text-slate-500 font-medium truncate max-w-[42px]">
+                      {(() => {
+                        const parts = d.date.split('-');
+                        if (parts.length === 3) {
+                          const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                          const mIdx = parseInt(parts[1], 10) - 1;
+                          if (mIdx >= 0 && mIdx < 12) return `${months[mIdx]} ${parts[2]}`;
+                        }
+                        return d.date.slice(5);
+                      })()}
                     </span>
                   </div>
                 );
@@ -823,13 +927,15 @@ export default function SchoolDashboard({
         )}
 
         {/* 10. Master Lead Directory & Interactive Table */}
-        <MasterLeadList
-          selectedCampaignId={selectedCampaignId}
-          selectedStatus={leadFilterStatus}
-          onSelectLead={(id) => setSelectedLeadId(id)}
-          onOpenCsvImport={() => setIsCsvModalOpen(true)}
-          refreshTrigger={refreshLeadsCounter}
-        />
+        <div id="section-leadlist">
+          <MasterLeadList
+            selectedCampaignId={selectedCampaignId}
+            selectedStatus={leadFilterStatus}
+            onSelectLead={(id) => setSelectedLeadId(id)}
+            onOpenCsvImport={() => setIsCsvModalOpen(true)}
+            refreshTrigger={refreshLeadsCounter}
+          />
+        </div>
 
         {/* 11. Collapsible Formula Accordion */}
         <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
