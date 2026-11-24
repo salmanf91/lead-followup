@@ -12,6 +12,22 @@ interface MasterLeadListProps {
   refreshTrigger?: number;
 }
 
+export function formatGrade(raw?: string | null): string {
+  if (!raw) return 'General';
+  let cleaned = raw
+    .replace(/\uFFFD/g, '-')
+    .replace(/[\u2013\u2014]/g, '-')
+    .replace(/(\d+)\?+(\d+)/g, '$1-$2')
+    .replace(/^grade_/i, 'Grade ')
+    .replace(/_/g, ' ')
+    .replace(/\s*-\s*/g, ' - ')
+    .trim();
+
+  if (/^kg$/i.test(cleaned)) return 'KG';
+  if (/^kg\s*(\d+)$/i.test(cleaned)) return cleaned.toUpperCase();
+  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+}
+
 export default function MasterLeadList({
   selectedCampaignId,
   selectedStatus: initialStatus = 'ALL',
@@ -392,7 +408,7 @@ export default function MasterLeadList({
                     </td>
 
                     <td className="py-3 px-4 whitespace-nowrap font-medium text-slate-800">
-                      {lead.grade || 'General'}
+                      {formatGrade(lead.grade)}
                     </td>
 
                     <td className="py-3 px-4 whitespace-nowrap text-slate-500">

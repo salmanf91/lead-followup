@@ -110,8 +110,8 @@ export async function getDashboardOverview(
     `SELECT
        COUNT(*)::int AS total_leads,
        COUNT(DISTINCT phone_normalized) FILTER (WHERE phone_normalized IS NOT NULL)::int AS unique_people,
-       COUNT(*) FILTER (WHERE feedback_status <> 'NOT_CONTACTED' OR EXISTS (SELECT 1 FROM follow_up_notes WHERE lead_id = leads.id))::int AS followed_count,
-       COUNT(*) FILTER (WHERE feedback_status = 'NOT_CONTACTED' AND NOT EXISTS (SELECT 1 FROM follow_up_notes WHERE lead_id = leads.id))::int AS remaining_not_contacted,
+       COUNT(*) FILTER (WHERE feedback_status <> 'NOT_CONTACTED' OR EXISTS (SELECT 1 FROM follow_up_notes WHERE lead_id = leads.id AND stage >= 1))::int AS followed_count,
+       COUNT(*) FILTER (WHERE feedback_status = 'NOT_CONTACTED' AND NOT EXISTS (SELECT 1 FROM follow_up_notes WHERE lead_id = leads.id AND stage >= 1))::int AS remaining_not_contacted,
        COUNT(*) FILTER (WHERE feedback_status = 'POSITIVE')::int AS positive_count,
        COUNT(*) FILTER (WHERE feedback_status = 'PENDING')::int AS pending_count,
        COUNT(*) FILTER (WHERE feedback_status = 'NEGATIVE')::int AS negative_count,
@@ -190,7 +190,7 @@ export async function getDashboardOverview(
        c.tab_name,
        c.display_order,
        COUNT(l.id)::int AS total_leads,
-       COUNT(l.id) FILTER (WHERE l.feedback_status <> 'NOT_CONTACTED' OR EXISTS (SELECT 1 FROM follow_up_notes WHERE lead_id = l.id))::int AS followed_count,
+       COUNT(l.id) FILTER (WHERE l.feedback_status <> 'NOT_CONTACTED' OR EXISTS (SELECT 1 FROM follow_up_notes WHERE lead_id = l.id AND stage >= 1))::int AS followed_count,
        COUNT(l.id) FILTER (WHERE l.feedback_status = 'POSITIVE')::int AS positive_count,
        COUNT(l.id) FILTER (WHERE l.feedback_status IN ('POSITIVE', 'NEGATIVE'))::int AS answered_count
      FROM campaigns c

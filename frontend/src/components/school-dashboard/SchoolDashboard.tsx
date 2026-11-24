@@ -799,18 +799,20 @@ export default function SchoolDashboard({
 
             <div className="h-44 flex items-end gap-2 pt-6 pb-2 overflow-x-auto">
               {dailyIntake.map((d) => {
-                const heightPercent = Math.max(10, Math.round((d.count / maxIntakeCount) * 100));
+                const heightPercent = Math.max(12, Math.round((d.count / maxIntakeCount) * 100));
                 return (
-                  <div key={d.date} className="flex-1 min-w-[28px] flex flex-col items-center gap-1.5 group">
-                    <span className="text-[10px] text-slate-400 font-mono opacity-0 group-hover:opacity-100 transition">
+                  <div key={d.date} className="flex-1 h-36 min-w-[32px] flex flex-col justify-end items-center gap-1 group">
+                    <span className="text-[10px] font-bold text-slate-700 font-mono opacity-0 group-hover:opacity-100 transition">
                       {d.count}
                     </span>
-                    <div
-                      style={{ height: `${heightPercent}%` }}
-                      className="w-full bg-indigo-500 group-hover:bg-indigo-600 rounded-t-lg transition-all"
-                      title={`${d.date}: ${d.count} leads`}
-                    />
-                    <span className="text-[9px] text-slate-400 font-mono truncate max-w-[32px]">
+                    <div className="w-full flex-1 flex items-end">
+                      <div
+                        style={{ height: `${heightPercent}%` }}
+                        className="w-full bg-[#10457C] group-hover:bg-[#DA2C38] rounded-t-md transition-all shadow-2xs"
+                        title={`${d.date}: ${d.count} leads`}
+                      />
+                    </div>
+                    <span className="text-[9px] text-slate-400 font-mono truncate max-w-[36px]">
                       {d.date.slice(5)}
                     </span>
                   </div>
