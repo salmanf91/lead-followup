@@ -94,11 +94,24 @@ export function parseDate(dateStr: string): Date | null {
       const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
       return isNaN(d.getTime()) ? null : d;
     }
-    // Assume DD.MM.YYYY or DD/MM/YY
-    const day = parseInt(parts[0], 10);
-    const month = parseInt(parts[1], 10) - 1;
+    // Handle dates where p0 or p1 might be month/day
+    let p0 = parseInt(parts[0], 10);
+    let p1 = parseInt(parts[1], 10);
     let year = parseInt(parts[2], 10);
     if (year < 100) year += 2000;
+
+    let day = p0;
+    let month = p1 - 1;
+
+    // If second number > 12, format MUST be MM/DD/YYYY (e.g. 11/13/2026)
+    if (p1 > 12 && p0 <= 12) {
+      day = p1;
+      month = p0 - 1;
+    } else if (p0 > 12 && p1 <= 12) {
+      // Format is DD/MM/YYYY
+      day = p0;
+      month = p1 - 1;
+    }
 
     const d = new Date(year, month, day);
     return isNaN(d.getTime()) ? null : d;

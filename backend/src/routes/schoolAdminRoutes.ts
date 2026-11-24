@@ -332,7 +332,11 @@ schoolAdminRouter.post('/leads/import-csv', async (req: Request, res: Response):
         ''
       ).trim();
       const phoneNorm = normalizePhone(rawPhone);
-      const grade = (row.grade || row.class || row.standard || row['grade'] || 'General').trim();
+      const rawGrade = (row.grade || row.class || row.standard || row['grade'] || 'General').trim();
+      const grade = rawGrade
+        .replace(/\uFFFD/g, '-')
+        .replace(/[\u2013\u2014]/g, '-')
+        .replace(/(\d+)\?+(\d+)/g, '$1-$2');
       const campaignName = (
         row.campaign ||
         row.campaigntab ||
