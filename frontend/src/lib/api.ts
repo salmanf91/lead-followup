@@ -1,11 +1,11 @@
 import { PublicTenantConfig, AuthUser, TenantRecord, TenantUser, DashboardOverview } from '../types';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 export async function getTenantConfig(subdomain: string): Promise<PublicTenantConfig> {
   const res = await fetch(`${API_BASE}/tenant/config`, {
     headers: {
-      'x-forwarded-host': `${subdomain}.leadfollowup.com`,
+      'x-tenant-slug': subdomain,
     },
     credentials: 'include',
   });
@@ -25,7 +25,7 @@ export async function login(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-forwarded-host': `${subdomain}.leadfollowup.com`,
+      'x-tenant-slug': subdomain,
     },
     credentials: 'include',
     body: JSON.stringify({ email, password }),

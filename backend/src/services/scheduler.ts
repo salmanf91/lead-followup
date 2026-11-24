@@ -34,3 +34,4 @@ export function stopSyncScheduler(): void {
     console.log('[Scheduler] Background sync scheduler stopped.');
   }
 }
+

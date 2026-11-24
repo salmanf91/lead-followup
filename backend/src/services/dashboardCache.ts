@@ -36,3 +36,4 @@ export function invalidateTenantDashboardCache(tenantId: string): void {
 export function clearAllDashboardCache(): void {
   cache.clear();
 }
+

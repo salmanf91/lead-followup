@@ -14,6 +14,19 @@ export function extractTenantSlug(req: Request): string | null {
     return headerSlug.trim().toLowerCase();
   }
 
+  // 1b. Check x-forwarded-host
+  const fwdHost = req.headers['x-forwarded-host'];
+  if (typeof fwdHost === 'string' && fwdHost.trim()) {
+    const fwdHostname = fwdHost.split(':')[0].toLowerCase();
+    const fwdParts = fwdHostname.split('.');
+    if (fwdParts.length >= 3) {
+      return fwdParts[0] === 'www' ? fwdParts[1] : fwdParts[0];
+    }
+    if (fwdParts.length === 2 && fwdParts[1] === 'localhost') {
+      return fwdParts[0];
+    }
+  }
+
   // 2. Query param (dev/test fallback)
   if (req.query.subdomain && typeof req.query.subdomain === 'string') {
     return req.query.subdomain.trim().toLowerCase();

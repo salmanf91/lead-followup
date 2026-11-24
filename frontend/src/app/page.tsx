@@ -195,16 +195,19 @@ export default function Home() {
             <div className="w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-4 font-bold text-xl shadow-xs">
               <AlertCircle className="w-7 h-7" />
             </div>
-            <h2 className="text-lg font-bold text-slate-900 mb-2">School Portal Not Found</h2>
+            <h2 className="text-lg font-bold text-slate-900 mb-2">
+              {activeSlug === 'admin' ? 'Portal Connection Error' : 'School Portal Not Found'}
+            </h2>
             <p className="text-xs text-slate-500 mb-6 leading-relaxed">
-              No active tenant was found for slug <code className="font-mono bg-slate-100 px-1.5 py-0.5 rounded text-indigo-600 font-semibold">{activeSlug}</code>.
-              School tenants are provisioned dynamically via the Super Admin Console.
+              {activeSlug === 'admin'
+                ? `Unable to connect to the backend API: ${error}. Please verify the backend service is running.`
+                : `No active tenant was found for slug ${activeSlug}. School tenants are provisioned dynamically via the Super Admin Console.`}
             </p>
             <button
               onClick={() => handleSlugSwitch('admin')}
               className="w-full py-2.5 px-4 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white text-xs font-semibold rounded-xl shadow-sm transition"
             >
-              Return to Super Admin Portal
+              Retry Super Admin Portal
             </button>
           </div>
         ) : (
