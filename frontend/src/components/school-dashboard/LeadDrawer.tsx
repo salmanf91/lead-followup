@@ -224,12 +224,12 @@ export default function LeadDrawer({ leadId, onClose, onLeadUpdated }: LeadDrawe
                     <div className="space-y-3 relative before:absolute before:inset-0 before:start-3.5 before:w-0.5 before:bg-slate-200">
                       {notes.map((note) => (
                         <div key={note.id} className="relative flex items-start gap-3 ps-8">
-                          <span className="absolute start-1.5 top-2 w-4 h-4 rounded-full border-2 border-white bg-indigo-600 shadow-sm flex items-center justify-center text-[9px] text-white font-bold">
+                          <span className="absolute start-1.5 top-2 w-4 h-4 rounded-full border-2 border-white bg-[#10457C] shadow-sm flex items-center justify-center text-[9px] text-white font-bold">
                             {note.stage}
                           </span>
-                          <div className="flex-1 bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm hover:border-slate-300 transition">
+                          <div className="flex-1 bg-white border border-slate-200 rounded-xl p-3.5 shadow-xs hover:border-slate-300 transition">
                             <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
-                              <span className="font-semibold text-indigo-700">
+                              <span className="font-bold text-[#10457C]">
                                 Stage {note.stage} • {note.counselor_tag || 'Counselor'}
                               </span>
                               <div className="flex items-center gap-1.5">
@@ -250,9 +250,9 @@ export default function LeadDrawer({ leadId, onClose, onLeadUpdated }: LeadDrawe
                 </div>
 
                 {/* Log New Follow-Up Form */}
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
                   <h3 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
-                    <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 text-[#10457C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
                     </svg>
                     Log New Follow-Up Note
@@ -340,7 +340,7 @@ export default function LeadDrawer({ leadId, onClose, onLeadUpdated }: LeadDrawe
                       <button
                         type="submit"
                         disabled={submitting || !noteText.trim()}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 transition shadow-sm"
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#10457C] hover:bg-[#0A2B4E] disabled:opacity-50 transition shadow-xs"
                       >
                         {submitting ? (
                           <>
@@ -365,3 +365,4 @@ export default function LeadDrawer({ leadId, onClose, onLeadUpdated }: LeadDrawe
     </div>
   );
 }
+

@@ -137,7 +137,7 @@ export default function MasterLeadList({
   };
 
   return (
-    <div id="lead-list" className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden scroll-mt-24">
+    <div id="lead-list" className="bg-white rounded-3xl border border-slate-200/90 shadow-bespoke overflow-hidden scroll-mt-24">
       {/* Header and Filter Controls */}
       <div className="p-6 border-b border-slate-200/80 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -196,7 +196,7 @@ export default function MasterLeadList({
                 }}
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
                   active
-                    ? 'bg-indigo-600 text-white shadow-sm'
+                    ? 'bg-[#10457C] text-white shadow-xs'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
                 }`}
               >
@@ -218,7 +218,7 @@ export default function MasterLeadList({
                 setPage(1);
               }}
               placeholder="Search parent name, phone, or notes..."
-              className="w-full text-xs rounded-xl border border-slate-300 py-2 ps-9 pe-3 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+              className="w-full text-xs rounded-xl border border-slate-300 py-2 ps-9 pe-3 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#10457C]/20 focus:border-[#10457C] shadow-xs"
             />
             <svg
               className="w-4 h-4 text-slate-400 absolute start-3 top-2.5"
@@ -416,7 +416,7 @@ export default function MasterLeadList({
                     <td className="py-3 px-4 text-end whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={() => onSelectLead(lead.id)}
-                        className="px-2.5 py-1 rounded-lg text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-600 hover:text-white transition shadow-sm"
+                        className="px-2.5 py-1 rounded-xl text-xs font-bold text-[#10457C] bg-[#F0F5FA] hover:bg-[#10457C] hover:text-white transition shadow-2xs border border-[#10457C]/10"
                       >
                         Notes ({lead.notes_count})
                       </button>
@@ -462,3 +462,4 @@ export default function MasterLeadList({
     </div>
   );
 }
+

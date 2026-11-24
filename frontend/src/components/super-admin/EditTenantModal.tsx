@@ -32,12 +32,12 @@ const COMMON_TIMEZONES = [
 ];
 
 const PRESET_COLORS = [
-  '#1E3A8A', // Classic Deep Blue
+  '#10457C', // ChilliPages Sapphire Navy
+  '#DA2C38', // ChilliPages Crimson Red
   '#0D9488', // Emerald Teal
   '#4338CA', // Indigo
   '#7C3AED', // Vivid Violet
   '#B45309', // Amber / Gold
-  '#BE185D', // Crimson Rose
   '#0F172A', // Slate Midnight
 ];
 
@@ -347,7 +347,7 @@ export default function EditTenantModal({ tenant, isOpen, onClose, onUpdated }: 
             <button
               type="submit"
               disabled={loading}
-              className="px-5 py-2.5 text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 rounded-xl shadow-md shadow-indigo-600/20 transition disabled:opacity-50"
+              className="px-5 py-2.5 text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-[#10457C] to-[#185EA5] hover:from-[#0A2B4E] hover:to-[#10457C] rounded-xl shadow-md shadow-[#10457C]/20 transition disabled:opacity-50"
             >
               {loading ? 'Saving Changes...' : 'Save Changes'}
             </button>

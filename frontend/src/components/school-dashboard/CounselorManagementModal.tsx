@@ -148,7 +148,7 @@ export default function CounselorManagementModal({ isOpen, onClose }: CounselorM
                 <button
                   type="submit"
                   disabled={saving || !name.trim() || !email.trim() || !password}
-                  className="px-4 py-1.5 rounded-lg text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 transition shadow-sm"
+                  className="px-4 py-1.5 rounded-xl text-xs font-bold text-white bg-[#10457C] hover:bg-[#0A2B4E] disabled:opacity-50 transition shadow-xs"
                 >
                   {saving ? 'Creating...' : 'Create Account'}
                 </button>
@@ -209,3 +209,4 @@ export default function CounselorManagementModal({ isOpen, onClose }: CounselorM
     </div>
   );
 }
+
