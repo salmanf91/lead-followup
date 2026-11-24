@@ -57,3 +57,4 @@ export function buildWhatsAppLink(phoneNormalized: string | null | undefined, te
   }
   return baseUrl;
 }
+
