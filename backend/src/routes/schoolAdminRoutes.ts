@@ -202,7 +202,7 @@ function parseCsv(csvText: string): { rows: Array<Record<string, string>>; detec
   };
 
   // Detect which line is the actual header row
-  const headerKeywords = ['name', 'phone', 'mobile', 'email', 'date', 'grade', 'student', 'parent', 'sr', 'srno', 'feedback', 'status', 'remarks', 'remark', 'followup', 'city'];
+  const headerKeywords = ['name', 'phone', 'mobile', 'email', 'date', 'grade', 'student', 'parent', 'sr', 'srno', 'feedback', 'status', 'remarks', 'remark', 'followup', 'city', 'experience', 'candidate', 'interview', 'salary', 'resume', 'notice', 'point'];
   let headerIndex = 0;
   let maxKeywordMatches = 0;
   let detectedCampaign: string | undefined = undefined;
@@ -309,10 +309,12 @@ schoolAdminRouter.post('/leads/import-csv', async (req: Request, res: Response):
       // Find row fields flexibly
       const name = (
         row.name ||
+        row.candidatename ||
         row.parentname ||
         row.studentname ||
         row.parent ||
         row.student ||
+        row.candidate ||
         row.fullname ||
         row['parent name'] ||
         row['name'] ||
@@ -332,7 +334,16 @@ schoolAdminRouter.post('/leads/import-csv', async (req: Request, res: Response):
         ''
       ).trim();
       const phoneNorm = normalizePhone(rawPhone);
-      const rawGrade = (row.grade || row.class || row.standard || row['grade'] || 'General').trim();
+      const rawGrade = (
+        row.grade ||
+        row.experience ||
+        row.class ||
+        row.standard ||
+        row.role ||
+        row.service ||
+        row['grade'] ||
+        'General'
+      ).trim();
       const grade = rawGrade
         .replace(/\uFFFD/g, '-')
         .replace(/[\u2013\u2014]/g, '-')
@@ -389,6 +400,8 @@ schoolAdminRouter.post('/leads/import-csv', async (req: Request, res: Response):
         row.remark ||
         row.feedback ||
         row.status ||
+        row.followupstatus ||
+        row.interviewstatus ||
         row.notes ||
         row['feedback'] ||
         ''
@@ -396,7 +409,7 @@ schoolAdminRouter.post('/leads/import-csv', async (req: Request, res: Response):
 
       const followups = [
         row.followup1 || row.followup_1 || row['followup 1'] || row['followup - 1'],
-        row.followup2 || row.followup_2 || row['followup 2'] || row['followup - 2'],
+        row.followup2 || row.followup_2 || row['followup 2'] || row['followup - 2'] || row.interviewstatus,
         row.followup3 || row.followup_3 || row['followup 3'] || row['followup - 3'],
       ]
         .filter((f): f is string => typeof f === 'string' && f.trim().length > 0 && f.trim() !== '-' && f.trim() !== '--')
@@ -432,6 +445,12 @@ schoolAdminRouter.post('/leads/import-csv', async (req: Request, res: Response):
       const metadataNotes: string[] = [];
       if (row.email && row.email.trim()) metadataNotes.push(`Email: ${row.email.trim()}`);
       if (row.city && row.city.trim()) metadataNotes.push(`City: ${row.city.trim()}`);
+      if (row.experience && row.experience.trim()) metadataNotes.push(`Experience: ${row.experience.trim()}`);
+      if (row.currentemployment && row.currentemployment.trim()) metadataNotes.push(`Employment: ${row.currentemployment.trim()}`);
+      if (row.noticeperiodjoiningavailability && row.noticeperiodjoiningavailability.trim()) metadataNotes.push(`Notice: ${row.noticeperiodjoiningavailability.trim()}`);
+      if (row.currentlastdrawnsalary && row.currentlastdrawnsalary.trim()) metadataNotes.push(`Salary: ${row.currentlastdrawnsalary.trim()}`);
+      if (row.resumereceived && row.resumereceived.trim()) metadataNotes.push(`Resume: ${row.resumereceived.trim()}`);
+      if (row.points10 && row.points10.trim()) metadataNotes.push(`Points: ${row.points10.trim()}/10`);
       if (metadataNotes.length > 0) {
         await query(
           `INSERT INTO follow_up_notes (tenant_id, lead_id, stage, note_text, counselor_tag, source, noted_at)

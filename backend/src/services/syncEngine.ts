@@ -82,12 +82,12 @@ export async function syncTenant(
       // Map headers case-insensitively
       const headers = rows[0].map((h) => h.toLowerCase().trim());
       const dateIdx = headers.findIndex((h) => h.includes('date') || h.includes('تاريخ'));
-      const nameIdx = headers.findIndex((h) => h.includes('name') || h.includes('student') || h.includes('parent') || h.includes('اسم'));
+      const nameIdx = headers.findIndex((h) => h.includes('name') || h.includes('student') || h.includes('parent') || h.includes('candidate') || h.includes('اسم'));
       const phoneIdx = headers.findIndex((h) => h.includes('phone') || h.includes('mobile') || h.includes('contact') || h.includes('هاتف') || h.includes('جوال'));
-      const gradeIdx = headers.findIndex((h) => h.includes('grade') || h.includes('class') || h.includes('صف'));
-      const feedbackIdx = headers.findIndex((h) => h.includes('feedback') || h.includes('status') || h.includes('حالة'));
+      const gradeIdx = headers.findIndex((h) => h.includes('grade') || h.includes('class') || h.includes('experience') || h.includes('role') || h.includes('service') || h.includes('صف'));
+      const feedbackIdx = headers.findIndex((h) => h.includes('feedback') || h.includes('status') || h.includes('remarks') || h.includes('remark') || h.includes('حالة'));
       const followup1Idx = headers.findIndex((h) => /followup\s*-?\s*1|متابعة\s*1/.test(h));
-      const followup2Idx = headers.findIndex((h) => /followup\s*-?\s*2|متابعة\s*2/.test(h));
+      const followup2Idx = headers.findIndex((h) => /followup\s*-?\s*2|interview|متابعة\s*2/.test(h));
       const followup3Idx = headers.findIndex((h) => /followup\s*-?\s*3|متابعة\s*3/.test(h));
 
       // 4. Process each row

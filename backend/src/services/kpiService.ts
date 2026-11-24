@@ -63,6 +63,19 @@ export interface DashboardOverview {
     lastUpdatedAt: string;
     whatsAppUrl: string | null;
   }>;
+  recentActivities?: Array<{
+    id: string;
+    leadId: string;
+    leadName: string;
+    leadGrade: string | null;
+    feedbackStatus: string;
+    campaignName: string;
+    authorName: string;
+    stage: number;
+    noteText: string;
+    source: string;
+    notedAt: string;
+  }>;
   syncInfo: {
     lastSyncedAt: string | null;
     lastSyncError: string | null;
@@ -279,6 +292,44 @@ export async function getDashboardOverview(
     whatsAppUrl: p.whatsapp_url,
   }));
 
+  // 7. Recent Follow-Up Activity & Counselor Notes Stream
+  const activityRes = await query(
+    `SELECT
+       fn.id,
+       fn.lead_id,
+       l.parent_name AS lead_name,
+       l.grade AS lead_grade,
+       l.feedback_status,
+       c.tab_name AS campaign_name,
+       COALESCE(u.name, fn.counselor_tag, 'Counselor') AS author_name,
+       fn.stage,
+       fn.note_text,
+       fn.source,
+       fn.noted_at::text AS noted_at
+     FROM follow_up_notes fn
+     JOIN leads l ON l.id = fn.lead_id
+     LEFT JOIN campaigns c ON c.id = l.campaign_id
+     LEFT JOIN users u ON u.id = fn.user_id
+     WHERE l.tenant_id = $1 ${campaignFilter}
+     ORDER BY fn.noted_at DESC
+     LIMIT 8`,
+    scopeParams
+  );
+
+  const recentActivities = (activityRes?.rows || []).map((a) => ({
+    id: a.id,
+    leadId: a.lead_id,
+    leadName: a.lead_name,
+    leadGrade: a.lead_grade,
+    feedbackStatus: a.feedback_status,
+    campaignName: a.campaign_name || 'General',
+    authorName: a.author_name,
+    stage: Number(a.stage || 1),
+    noteText: a.note_text,
+    source: a.source,
+    notedAt: a.noted_at,
+  }));
+
   const result: DashboardOverview = {
     kpiCards: {
       totalLeads,
@@ -329,6 +380,7 @@ export async function getDashboardOverview(
     campaigns,
     dailyIntake,
     priorityLeads,
+    recentActivities,
     syncInfo: {
       lastSyncedAt: tenant.last_synced_at ? new Date(tenant.last_synced_at).toISOString() : null,
       lastSyncError: tenant.last_sync_error,

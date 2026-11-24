@@ -293,6 +293,8 @@ describe('Milestone 3 — Hybrid Sync Engine & KPI Aggregation', () => {
         // 5. Daily intake
         .mockResolvedValueOnce({ rows: [] } as any)
         // 6. Priority leads
+        .mockResolvedValueOnce({ rows: [] } as any)
+        // 7. Recent activities
         .mockResolvedValueOnce({ rows: [] } as any);
 
       const overview = await getDashboardOverview(testTenantId, undefined, true);
@@ -383,7 +385,9 @@ describe('Milestone 3 — Hybrid Sync Engine & KPI Aggregation', () => {
               whatsapp_url: 'https://wa.me/966501234567',
             },
           ],
-        } as any);
+        } as any)
+        // 7. Recent activities
+        .mockResolvedValueOnce({ rows: [] } as any);
 
       const overview = await getDashboardOverview(testTenantId, undefined, true);
 
@@ -415,6 +419,7 @@ describe('Milestone 3 — Hybrid Sync Engine & KPI Aggregation', () => {
         .mockResolvedValueOnce({ rows: [{ stage1_completed: 5 }] } as any)
         .mockResolvedValueOnce({ rows: [] } as any)
         .mockResolvedValueOnce({ rows: [] } as any)
+        .mockResolvedValueOnce({ rows: [] } as any)
         .mockResolvedValueOnce({ rows: [] } as any);
 
       const res = await request(app)
@@ -437,6 +442,7 @@ describe('Milestone 3 — Hybrid Sync Engine & KPI Aggregation', () => {
           rows: [{ total_leads: 10, followed_count: 5, positive_count: 3 }],
         } as any)
         .mockResolvedValueOnce({ rows: [{ stage1_completed: 5 }] } as any)
+        .mockResolvedValueOnce({ rows: [] } as any)
         .mockResolvedValueOnce({ rows: [] } as any)
         .mockResolvedValueOnce({ rows: [] } as any)
         .mockResolvedValueOnce({ rows: [] } as any);

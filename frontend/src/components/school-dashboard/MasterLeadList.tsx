@@ -269,7 +269,7 @@ export default function MasterLeadList({
               }}
               className="w-full text-xs rounded-xl border border-slate-300 py-2 px-3 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
             >
-              <option value="ALL">All Grades / Levels</option>
+              <option value="ALL">All Grades / Experience</option>
               <option value="KG1">KG 1</option>
               <option value="KG2">KG 2</option>
               <option value="KG3">KG 3</option>
@@ -340,10 +340,10 @@ export default function MasterLeadList({
             <thead>
               <tr className="border-b border-slate-200/80 bg-slate-50/75 text-slate-600 font-semibold uppercase tracking-wider text-[11px]">
                 <th className="py-3 px-4 text-start">Feedback</th>
-                <th className="py-3 px-4 text-start">Parent / Student Name</th>
+                <th className="py-3 px-4 text-start">Lead / Candidate Name</th>
                 <th className="py-3 px-4 text-start">Contact</th>
                 <th className="py-3 px-4 text-start">Campaign Tab</th>
-                <th className="py-3 px-4 text-start">Grade</th>
+                <th className="py-3 px-4 text-start">Grade / Experience</th>
                 <th className="py-3 px-4 text-start cursor-pointer hover:text-slate-900" onClick={() => {
                   setSortBy('lead_date');
                   setOrder(order === 'asc' ? 'desc' : 'asc');
