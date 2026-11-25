@@ -26,8 +26,10 @@ import {
   Hash,
   Download,
   Upload,
+  Archive,
+  RotateCcw,
 } from 'lucide-react';
-import { getDashboardOverview, triggerSchoolSync, getExportLeadsCsvUrl } from '../../lib/api';
+import { getDashboardOverview, triggerSchoolSync, getExportLeadsCsvUrl, updateCampaignStatus } from '../../lib/api';
 import { AuthUser, PublicTenantConfig, DashboardOverview } from '../../types';
 import MasterLeadList from './MasterLeadList';
 import LeadDrawer from './LeadDrawer';
@@ -61,6 +63,28 @@ export default function SchoolDashboard({
   const [isCounselorModalOpen, setIsCounselorModalOpen] = useState<boolean>(false);
   const [leadFilterStatus, setLeadFilterStatus] = useState<string>('ALL');
   const [refreshLeadsCounter, setRefreshLeadsCounter] = useState<number>(0);
+  const [showInactiveCampaigns, setShowInactiveCampaigns] = useState<boolean>(false);
+  const [togglingCampaignId, setTogglingCampaignId] = useState<string | null>(null);
+
+  const handleToggleCampaignStatus = async (campaignId: string, isActive: boolean) => {
+    setTogglingCampaignId(campaignId);
+    try {
+      const tenantId = currentUser.tenantId || tenantConfig?.id;
+      const res = await updateCampaignStatus(campaignId, isActive, tenantId);
+      if (res.success) {
+        setToastMessage(`Campaign marked as ${isActive ? 'active' : 'inactive'}`);
+        setTimeout(() => setToastMessage(null), 3000);
+        if (selectedCampaignId === campaignId && !isActive) {
+          setSelectedCampaignId('ALL');
+        }
+        await fetchData(selectedCampaignId === campaignId && !isActive ? 'ALL' : selectedCampaignId, true);
+      }
+    } catch (err: any) {
+      alert(err.message || 'Failed to update campaign status');
+    } finally {
+      setTogglingCampaignId(null);
+    }
+  };
 
   const handleFilterStatus = (status: string) => {
     setLeadFilterStatus(status);
@@ -276,8 +300,8 @@ export default function SchoolDashboard({
             {[
               { id: 'section-overview', key: 'overview', label: 'Overview' },
               { id: 'section-followups', key: 'followups', label: 'Follow-ups' },
-              { id: 'section-positive', key: 'positive', label: 'Positive leads' },
               { id: 'section-campaigns', key: 'campaigns', label: 'Campaigns' },
+              { id: 'section-positive', key: 'positive', label: 'Positive leads' },
               { id: 'section-activity', key: 'activity', label: 'Recent activity' },
               { id: 'section-leadlist', key: 'leadlist', label: 'Lead list' },
             ].map((tab) => (
@@ -328,7 +352,7 @@ export default function SchoolDashboard({
             All Campaign Tabs ({kpis?.totalLeads || 0})
           </button>
 
-          {campaigns.map((camp) => (
+          {campaigns.filter((c) => c.isActive !== false).map((camp) => (
             <button
               key={camp.id}
               onClick={() => setSelectedCampaignId(camp.id)}
@@ -764,10 +788,28 @@ export default function SchoolDashboard({
               <FileSpreadsheet className="w-3.5 h-3.5 text-indigo-600" />
               <span>Campaign Performance Comparison Matrix</span>
             </h3>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
+              {campaigns.filter((c) => c.isActive === false).length > 0 && (
+                <button
+                  onClick={() => setShowInactiveCampaigns(!showInactiveCampaigns)}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-xl border transition shadow-2xs ${
+                    showInactiveCampaigns
+                      ? 'bg-slate-800 text-white border-slate-800'
+                      : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+                  }`}
+                  title="Toggle display of completed / inactive campaigns"
+                >
+                  <Archive className="w-3.5 h-3.5" />
+                  <span>
+                    {showInactiveCampaigns
+                      ? 'Hide Inactive'
+                      : `Show Inactive (${campaigns.filter((c) => c.isActive === false).length})`}
+                  </span>
+                </button>
+              )}
               <span className="text-xs text-slate-400">
                 {selectedCampaignId === 'ALL'
-                  ? `Showing all ${campaigns.length} campaigns`
+                  ? `Showing ${(selectedCampaignId === 'ALL' ? campaigns : campaigns.filter((c) => c.id === selectedCampaignId)).filter((c) => showInactiveCampaigns || c.isActive !== false).length} campaigns`
                   : `Filtered to selected campaign (${campaigns.find((c) => c.id === selectedCampaignId)?.tabName || '1'})`}
               </span>
               {selectedCampaignId !== 'ALL' && (
@@ -786,6 +828,7 @@ export default function SchoolDashboard({
               <thead>
                 <tr className="bg-slate-50/80 border-b border-slate-200/80 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">
                   <th className="py-3 px-4 text-start">Campaign Tab</th>
+                  <th className="py-3 px-4 text-start">Status</th>
                   <th className="py-3 px-4 text-start">Total Leads</th>
                   <th className="py-3 px-4 text-start">Followed Up</th>
                   <th className="py-3 px-4 text-start">Contact Rate</th>
@@ -798,41 +841,95 @@ export default function SchoolDashboard({
                 {(selectedCampaignId === 'ALL'
                   ? campaigns
                   : campaigns.filter((c) => c.id === selectedCampaignId)
-                ).map((c) => (
+                )
+                  .filter((c) => showInactiveCampaigns || c.isActive !== false)
+                  .map((c) => (
                   <tr
                     key={c.id}
                     className={`hover:bg-slate-50/70 transition cursor-pointer ${
                       selectedCampaignId === c.id ? 'bg-indigo-50/40 font-medium' : ''
-                    }`}
+                    } ${c.isActive === false ? 'opacity-70 bg-slate-50/40' : ''}`}
                     onClick={() => {
                       setSelectedCampaignId(c.id);
                       scrollToSection('section-leadlist', 'leadlist');
                     }}
                   >
-                    <td className="py-3.5 px-4 font-semibold text-slate-900">{c.tabName}</td>
+                    <td className="py-3.5 px-4 font-semibold text-slate-900">
+                      <div className="flex items-center gap-2">
+                        <span>{c.tabName}</span>
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-4">
+                      {c.isActive !== false ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                          Active
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-500 border border-slate-200">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                          Inactive
+                        </span>
+                      )}
+                    </td>
                     <td className="py-3.5 px-4">{c.totalLeads}</td>
                     <td className="py-3.5 px-4 text-indigo-700 font-medium">{c.followedCount}</td>
                     <td className="py-3.5 px-4">{c.followedPercent}%</td>
                     <td className="py-3.5 px-4 text-emerald-700 font-semibold">{c.positiveCount}</td>
                     <td className="py-3.5 px-4">{c.positiveRatePercent}%</td>
                     <td className="py-3.5 px-4 text-end" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={() => {
-                          setSelectedCampaignId(c.id);
-                          scrollToSection('section-leadlist', 'leadlist');
-                        }}
-                        className="inline-flex items-center gap-1 text-xs text-[#10457C] hover:text-[#0A2B4E] font-bold hover:underline"
-                        title="View leads for this campaign tab"
-                      >
-                        <span>View Leads ({c.totalLeads})</span>
-                        <ArrowUpRight className="w-3.5 h-3.5" />
-                      </button>
+                      <div className="inline-flex items-center gap-2 justify-end">
+                        <button
+                          onClick={() => {
+                            setSelectedCampaignId(c.id);
+                            scrollToSection('section-leadlist', 'leadlist');
+                          }}
+                          className="inline-flex items-center gap-1 text-xs text-[#10457C] hover:text-[#0A2B4E] font-bold hover:underline"
+                          title="View leads for this campaign tab"
+                        >
+                          <span>View Leads ({c.totalLeads})</span>
+                          <ArrowUpRight className="w-3.5 h-3.5" />
+                        </button>
+
+                        {(currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'SCHOOL_ADMIN') && (
+                          c.isActive !== false ? (
+                            <button
+                              onClick={async () => {
+                                if (window.confirm(`Inactivate campaign "${c.tabName}"?\n\nThis will hide the campaign tab from counselors. All historic leads remain preserved.`)) {
+                                  await handleToggleCampaignStatus(c.id, false);
+                                }
+                              }}
+                              disabled={togglingCampaignId === c.id}
+                              className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold text-slate-600 hover:text-amber-800 hover:bg-amber-50 border border-slate-200 hover:border-amber-200 rounded-lg transition disabled:opacity-50"
+                              title="Inactivate / Mark Completed"
+                            >
+                              <Archive className="w-3 h-3 text-slate-500 hover:text-amber-600" />
+                              <span>Inactivate</span>
+                            </button>
+                          ) : (
+                            <button
+                              onClick={async () => {
+                                await handleToggleCampaignStatus(c.id, true);
+                              }}
+                              disabled={togglingCampaignId === c.id}
+                              className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 border border-emerald-200 rounded-lg transition disabled:opacity-50"
+                              title="Reactivate campaign tab"
+                            >
+                              <RotateCcw className="w-3 h-3 text-emerald-600" />
+                              <span>Reactivate</span>
+                            </button>
+                          )
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
-                {campaigns.length === 0 && (
+                {(selectedCampaignId === 'ALL'
+                  ? campaigns
+                  : campaigns.filter((c) => c.id === selectedCampaignId)
+                ).filter((c) => showInactiveCampaigns || c.isActive !== false).length === 0 && (
                   <tr>
-                    <td colSpan={7} className="py-8 text-center text-slate-400">
+                    <td colSpan={8} className="py-8 text-center text-slate-400">
                       No campaign tabs found.
                     </td>
                   </tr>

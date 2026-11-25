@@ -94,6 +94,7 @@ export interface DashboardOverview {
     id: string;
     tabName: string;
     displayOrder: number;
+    isActive?: boolean;
     totalLeads: number;
     followedCount: number;
     followedPercent: number;

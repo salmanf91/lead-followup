@@ -67,7 +67,7 @@ export async function syncTenant(
         `INSERT INTO campaigns (tenant_id, tab_name, display_order, is_active)
          VALUES ($1, $2, $3, true)
          ON CONFLICT (tenant_id, tab_name)
-         DO UPDATE SET is_active = true, display_order = EXCLUDED.display_order
+         DO UPDATE SET display_order = EXCLUDED.display_order
          RETURNING id`,
         [tenantId, tabName, tabIndex]
       );
