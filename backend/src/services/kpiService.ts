@@ -202,14 +202,15 @@ export async function getDashboardOverview(
        c.id,
        c.tab_name,
        c.display_order,
+       c.is_active,
        COUNT(l.id)::int AS total_leads,
        COUNT(l.id) FILTER (WHERE l.feedback_status <> 'NOT_CONTACTED' OR EXISTS (SELECT 1 FROM follow_up_notes WHERE lead_id = l.id AND stage >= 1))::int AS followed_count,
        COUNT(l.id) FILTER (WHERE l.feedback_status = 'POSITIVE')::int AS positive_count,
        COUNT(l.id) FILTER (WHERE l.feedback_status IN ('POSITIVE', 'NEGATIVE'))::int AS answered_count
      FROM campaigns c
      LEFT JOIN leads l ON l.campaign_id = c.id
-     WHERE c.tenant_id = $1 AND c.is_active = true
-     GROUP BY c.id, c.tab_name, c.display_order
+     WHERE c.tenant_id = $1
+     GROUP BY c.id, c.tab_name, c.display_order, c.is_active
      ORDER BY c.display_order ASC, c.tab_name ASC`,
     [tenantId]
   );
@@ -224,6 +225,7 @@ export async function getDashboardOverview(
       id: c.id,
       tabName: c.tab_name,
       displayOrder: Number(c.display_order || 0),
+      isActive: c.is_active !== false,
       totalLeads: campTotal,
       followedCount: campFollowed,
       followedPercent: campTotal > 0 ? Math.round((campFollowed / campTotal) * 100) : 0,
