@@ -100,6 +100,11 @@ schoolAdminRouter.patch('/users/:id', async (req: Request, res: Response): Promi
       targetTenantId = req.body.tenantId;
     }
 
+    if (!targetTenantId) {
+      res.status(400).json({ error: 'Tenant context is required' });
+      return;
+    }
+
     const { id } = req.params;
     const { is_active, password } = req.body;
 
@@ -154,6 +159,11 @@ schoolAdminRouter.patch('/campaigns/:id', async (req: Request, res: Response): P
     let targetTenantId = user.tenantId;
     if (user.role === 'SUPER_ADMIN' && typeof req.body.tenantId === 'string') {
       targetTenantId = req.body.tenantId;
+    }
+
+    if (!targetTenantId) {
+      res.status(400).json({ error: 'Tenant context is required' });
+      return;
     }
 
     const { id } = req.params;
