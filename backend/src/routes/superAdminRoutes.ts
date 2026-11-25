@@ -9,6 +9,22 @@ import { syncTenant } from '../services/syncEngine.js';
 export const superAdminRouter = Router();
 
 /**
+ * GET /api/super-admin/service-account
+ * Returns the configured Google Service Account email for sheet sharing.
+ */
+superAdminRouter.get('/service-account', async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const email = config.google?.serviceAccountEmail || '';
+    res.json({
+      serviceAccountEmail: email,
+      isConfigured: Boolean(email && email.length > 0),
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to retrieve service account info' });
+  }
+});
+
+/**
  * GET /api/super-admin/tenants
  * Lists all school tenants with sync health, manual license info, and user/campaign counts.
  */

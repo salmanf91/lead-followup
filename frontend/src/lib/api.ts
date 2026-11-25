@@ -165,6 +165,16 @@ export async function impersonateTenant(tenantId: string): Promise<{ success: bo
   return data;
 }
 
+export async function getServiceAccountInfo(): Promise<{ serviceAccountEmail: string; isConfigured: boolean }> {
+  const res = await fetch(`${API_BASE}/super-admin/service-account`, {
+    credentials: 'include',
+  });
+  if (!res.ok) {
+    return { serviceAccountEmail: '', isConfigured: false };
+  }
+  return res.json();
+}
+
 // ================= Dashboard Analytics APIs =================
 
 export async function getDashboardOverview(campaignId?: string, fresh = false): Promise<DashboardOverview> {

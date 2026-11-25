@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { createTenant } from '../../lib/api';
 import { TenantRecord } from '../../types';
+import GoogleSheetNoticeBoard from '../common/GoogleSheetNoticeBoard';
 
 interface Props {
   isOpen: boolean;
@@ -317,6 +318,10 @@ export default function CreateTenantModal({ isOpen, onClose, onCreated }: Props)
                 </div>
               )}
             </div>
+
+            {dataMode === 'HYBRID_SHEET' && (
+              <GoogleSheetNoticeBoard variant="modal" defaultOpen={false} />
+            )}
 
             {dataMode === 'HYBRID_SHEET' && (
               <label className="flex items-center gap-2 cursor-pointer p-2.5 rounded-xl bg-slate-50 border border-slate-200/70 hover:bg-slate-100/60 transition">

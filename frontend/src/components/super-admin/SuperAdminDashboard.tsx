@@ -30,6 +30,7 @@ import CreateTenantModal from './CreateTenantModal';
 import EditTenantModal from './EditTenantModal';
 import TenantUsersModal from './TenantUsersModal';
 import ChilliPagesLogo from '../common/ChilliPagesLogo';
+import GoogleSheetNoticeBoard from '../common/GoogleSheetNoticeBoard';
 
 interface Props {
   currentUser: AuthUser;
@@ -301,6 +302,9 @@ export default function SuperAdminDashboard({
             <p className="text-[11px] text-slate-500 mt-0.5">Counselors & school admins</p>
           </div>
         </div>
+
+        {/* 3b. Google Sheets Pipeline Notice Board for Super Admin */}
+        <GoogleSheetNoticeBoard variant="banner" defaultOpen={true} />
 
         {/* 4. Filter & Search Bar */}
         <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-bespoke flex flex-wrap items-center justify-between gap-4">

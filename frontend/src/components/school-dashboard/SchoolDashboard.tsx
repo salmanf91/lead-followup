@@ -201,13 +201,13 @@ export default function SchoolDashboard({
               <span className="font-mono text-[#10457C] font-semibold">{countdown}s</span>
             </div>
 
-            {/* Sync Button */}
-            {syncInfo?.dataMode === 'HYBRID_SHEET' && (
+            {/* Sync Button (Super Admin support only; client relies on automatic 60s live pulse) */}
+            {syncInfo?.dataMode === 'HYBRID_SHEET' && currentUser.role === 'SUPER_ADMIN' && (
               <button
                 onClick={handleManualSync}
                 disabled={syncing}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition shadow-2xs disabled:opacity-50"
-                title="Sync with Google Sheet immediately"
+                title="Sync with Google Sheet immediately (Super Admin only)"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin text-[#10457C]' : ''}`} />
                 <span className="hidden sm:inline">{syncing ? 'Syncing...' : 'Sync Now'}</span>
@@ -225,15 +225,17 @@ export default function SchoolDashboard({
               <span className="hidden sm:inline">Export CSV</span>
             </a>
 
-            {/* Import CSV Button */}
-            <button
-              onClick={() => setIsCsvModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition shadow-2xs"
-              title="Import leads from CSV"
-            >
-              <Upload className="w-3.5 h-3.5 text-slate-500" />
-              <span className="hidden sm:inline">Import CSV</span>
-            </button>
+            {/* Import CSV Button (Super Admin only) */}
+            {currentUser.role === 'SUPER_ADMIN' && (
+              <button
+                onClick={() => setIsCsvModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition shadow-2xs"
+                title="Import leads from CSV (Super Admin only)"
+              >
+                <Upload className="w-3.5 h-3.5 text-slate-500" />
+                <span className="hidden sm:inline">Import CSV</span>
+              </button>
+            )}
 
             {/* Counselor Management for School Admin */}
             {(currentUser.role === 'SCHOOL_ADMIN' || currentUser.role === 'SUPER_ADMIN') && (
@@ -1032,7 +1034,7 @@ export default function SchoolDashboard({
             selectedCampaignId={selectedCampaignId}
             selectedStatus={leadFilterStatus}
             onSelectLead={(id) => setSelectedLeadId(id)}
-            onOpenCsvImport={() => setIsCsvModalOpen(true)}
+            onOpenCsvImport={currentUser.role === 'SUPER_ADMIN' ? () => setIsCsvModalOpen(true) : undefined}
             refreshTrigger={refreshLeadsCounter}
           />
         </div>
