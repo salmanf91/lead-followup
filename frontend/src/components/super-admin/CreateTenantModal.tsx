@@ -170,7 +170,7 @@ export default function CreateTenantModal({ isOpen, onClose, onCreated }: Props)
                   required
                   value={name}
                   onChange={(e) => handleNameChange(e.target.value)}
-                  placeholder="e.g. Horizon Academy / Apex Enterprise"
+                  placeholder="e.g. Academy / Enterprise"
                   className="w-full px-3.5 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 focus:outline-none transition"
                 />
               </div>
@@ -185,7 +185,7 @@ export default function CreateTenantModal({ isOpen, onClose, onCreated }: Props)
                     required
                     value={slug}
                     onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                    placeholder="horizon-academy"
+                    placeholder="academy"
                     className="w-full px-3.5 py-2 text-xs sm:text-sm font-mono bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 focus:outline-none transition"
                   />
                 </div>
