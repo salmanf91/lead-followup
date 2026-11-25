@@ -373,3 +373,21 @@ export function getExportLeadsCsvUrl(campaignId?: string, status?: string): stri
   return `${API_BASE}/school-admin/leads/export-csv${qs}`;
 }
 
+export async function updateCampaignStatus(
+  campaignId: string,
+  isActive: boolean,
+  tenantId?: string
+): Promise<{ success: boolean; campaign: any }> {
+  const res = await fetch(`${API_BASE}/school-admin/campaigns/${campaignId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ is_active: isActive, tenantId }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || 'Failed to update campaign');
+  }
+  return data;
+}
+

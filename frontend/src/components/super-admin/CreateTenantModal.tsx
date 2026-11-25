@@ -170,7 +170,7 @@ export default function CreateTenantModal({ isOpen, onClose, onCreated }: Props)
                   required
                   value={name}
                   onChange={(e) => handleNameChange(e.target.value)}
-                  placeholder="e.g. Al-Qalam Academy"
+                  placeholder="e.g. Horizon Academy / Apex Enterprise"
                   className="w-full px-3.5 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 focus:outline-none transition"
                 />
               </div>
@@ -185,7 +185,7 @@ export default function CreateTenantModal({ isOpen, onClose, onCreated }: Props)
                     required
                     value={slug}
                     onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                    placeholder="al-qalam"
+                    placeholder="horizon-academy"
                     className="w-full px-3.5 py-2 text-xs sm:text-sm font-mono bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 focus:outline-none transition"
                   />
                 </div>
@@ -204,7 +204,7 @@ export default function CreateTenantModal({ isOpen, onClose, onCreated }: Props)
                 required
                 value={dashboardTitle}
                 onChange={(e) => setDashboardTitle(e.target.value)}
-                placeholder="Al-Qalam Admissions & Follow-Up Portal"
+                placeholder="Admissions & Client Follow-Up Portal"
                 className="w-full px-3.5 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 focus:outline-none transition"
               />
             </div>
@@ -419,6 +419,9 @@ export default function CreateTenantModal({ isOpen, onClose, onCreated }: Props)
                       placeholder="admin@school.edu"
                       className="w-full px-3 py-2 text-xs sm:text-sm bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 focus:outline-none"
                     />
+                    <p className="text-[10px] text-slate-400 mt-1">
+                      Must be a unique email across the platform.
+                    </p>
                   </div>
                 </div>
 

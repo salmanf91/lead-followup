@@ -10,6 +10,7 @@ import {
   Search,
   Plus,
   SlidersHorizontal,
+  Edit3,
   ExternalLink,
   CheckCircle2,
   AlertTriangle,
@@ -565,10 +566,11 @@ export default function SuperAdminDashboard({
                       {/* Settings Edit Button */}
                       <button
                         onClick={() => setEditingTenant(t)}
-                        className="p-2 text-slate-600 hover:text-slate-900 hover:bg-white rounded-xl border border-transparent hover:border-slate-200 transition shadow-2xs"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-slate-700 hover:text-[#10457C] bg-white hover:bg-[#F0F5FA] rounded-xl border border-slate-200 shadow-2xs transition"
                         title="Edit school settings & white-labeling"
                       >
-                        <SlidersHorizontal className="w-3.5 h-3.5" />
+                        <Edit3 className="w-3.5 h-3.5 text-[#10457C]" />
+                        <span>EDIT</span>
                       </button>
                     </div>
 
