@@ -155,13 +155,15 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F8FAFC] text-slate-900 font-sans antialiased">
-      {/* Dev Navigation & Subdomain Switcher */}
-      <header className="bg-slate-950/95 backdrop-blur-md text-slate-300 text-xs py-2.5 px-6 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80">
+      {/* Top Portal Switcher Bar - Aligned to Dashboard Header */}
+      <header className="bg-white/95 backdrop-blur-md text-slate-700 text-xs py-3 px-4 sm:px-6 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 shadow-xs">
         <div className="flex items-center gap-3">
-          <ChilliPagesLogo height={20} className="h-5 w-auto" />
-          <span className="w-px h-4 bg-slate-800" />
-          <span className="font-semibold text-white flex items-center gap-1.5 text-[11px]">
-            <Globe className="w-3.5 h-3.5 text-[#185EA5]" />
+          <div className="p-1.5 bg-white rounded-xl border border-slate-200/80 shadow-2xs flex items-center justify-center">
+            <ChilliPagesLogo height={20} className="h-5 w-auto" />
+          </div>
+          <span className="w-px h-4 bg-slate-200" />
+          <span className="font-semibold text-slate-800 flex items-center gap-1.5 text-xs">
+            <Globe className="w-3.5 h-3.5 text-[#10457C]" />
             Portal Switcher:
           </span>
           <button
@@ -169,7 +171,7 @@ export default function Home() {
             className={`px-3 py-1 rounded-xl text-xs font-semibold transition ${
               activeSlug === 'admin'
                 ? 'bg-[#10457C] text-white shadow-xs'
-                : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800'
+                : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80'
             }`}
           >
             admin (Super Admin)
@@ -186,19 +188,19 @@ export default function Home() {
               value={customSlugInput}
               onChange={(e) => setCustomSlugInput(e.target.value)}
               placeholder="e.g. school-slug"
-              className="px-3 py-1 rounded-xl bg-slate-900 text-white placeholder-slate-500 border border-slate-800 text-xs focus:outline-none focus:ring-1 focus:ring-[#10457C] w-32"
+              className="px-3 py-1 rounded-xl bg-white text-slate-900 placeholder-slate-400 border border-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-[#10457C] w-32 shadow-2xs"
             />
             <button
               type="submit"
-              className="px-3 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition"
+              className="px-3 py-1 rounded-xl bg-[#10457C] hover:bg-[#0A2B4E] text-white text-xs font-semibold transition shadow-2xs"
             >
               Go
             </button>
           </form>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-slate-400">Context:</span>
-          <code className="bg-slate-900 border border-slate-800 px-2.5 py-0.5 rounded-lg text-slate-300 font-mono text-xs">
+          <span className="text-slate-400 text-xs">Context:</span>
+          <code className="bg-slate-100 border border-slate-200/80 px-2.5 py-0.5 rounded-lg text-slate-700 font-mono text-xs font-medium">
             {activeSlug}.yourplatform.com
           </code>
         </div>
@@ -231,11 +233,13 @@ export default function Home() {
             {/* Header with White-Label Branding */}
             <div className="p-8 text-center border-b border-slate-100 bg-slate-50/40">
               {tenantConfig?.logoUrl ? (
-                <img
-                  src={tenantConfig.logoUrl}
-                  alt={tenantConfig.dashboardTitle}
-                  className="h-12 mx-auto mb-4 object-contain"
-                />
+                <div className="inline-block p-2.5 bg-white rounded-2xl border border-slate-200/90 shadow-2xs mb-4">
+                  <img
+                    src={tenantConfig.logoUrl}
+                    alt={tenantConfig.dashboardTitle}
+                    className="h-12 max-w-[200px] object-contain"
+                  />
+                </div>
               ) : (
                 <div
                   className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 text-white font-black text-2xl shadow-sm"

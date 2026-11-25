@@ -165,6 +165,16 @@ export async function impersonateTenant(tenantId: string): Promise<{ success: bo
   return data;
 }
 
+export async function getServiceAccountInfo(): Promise<{ serviceAccountEmail: string; isConfigured: boolean }> {
+  const res = await fetch(`${API_BASE}/super-admin/service-account`, {
+    credentials: 'include',
+  });
+  if (!res.ok) {
+    return { serviceAccountEmail: '', isConfigured: false };
+  }
+  return res.json();
+}
+
 // ================= Dashboard Analytics APIs =================
 
 export async function getDashboardOverview(campaignId?: string, fresh = false): Promise<DashboardOverview> {
@@ -371,5 +381,23 @@ export function getExportLeadsCsvUrl(campaignId?: string, status?: string): stri
   if (status && status !== 'ALL') query.set('status', status);
   const qs = query.toString() ? `?${query.toString()}` : '';
   return `${API_BASE}/school-admin/leads/export-csv${qs}`;
+}
+
+export async function updateCampaignStatus(
+  campaignId: string,
+  isActive: boolean,
+  tenantId?: string
+): Promise<{ success: boolean; campaign: any }> {
+  const res = await fetch(`${API_BASE}/school-admin/campaigns/${campaignId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ is_active: isActive, tenantId }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || 'Failed to update campaign');
+  }
+  return data;
 }
 

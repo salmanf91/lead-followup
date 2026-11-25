@@ -139,7 +139,13 @@ export default function SchoolDashboard({
     setActiveNavTab(tabKey);
     const el = document.getElementById(sectionId);
     if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const headerOffset = 135;
+      const elementPosition = el.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+      window.scrollTo({
+        top: Math.max(0, offsetPosition),
+        behavior: 'smooth',
+      });
     }
   };
 
@@ -195,13 +201,13 @@ export default function SchoolDashboard({
               <span className="font-mono text-[#10457C] font-semibold">{countdown}s</span>
             </div>
 
-            {/* Sync Button */}
-            {syncInfo?.dataMode === 'HYBRID_SHEET' && (
+            {/* Sync Button (Super Admin support only; client relies on automatic 60s live pulse) */}
+            {syncInfo?.dataMode === 'HYBRID_SHEET' && currentUser.role === 'SUPER_ADMIN' && (
               <button
                 onClick={handleManualSync}
                 disabled={syncing}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition shadow-2xs disabled:opacity-50"
-                title="Sync with Google Sheet immediately"
+                title="Sync with Google Sheet immediately (Super Admin only)"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin text-[#10457C]' : ''}`} />
                 <span className="hidden sm:inline">{syncing ? 'Syncing...' : 'Sync Now'}</span>
@@ -219,15 +225,17 @@ export default function SchoolDashboard({
               <span className="hidden sm:inline">Export CSV</span>
             </a>
 
-            {/* Import CSV Button */}
-            <button
-              onClick={() => setIsCsvModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition shadow-2xs"
-              title="Import leads from CSV"
-            >
-              <Upload className="w-3.5 h-3.5 text-slate-500" />
-              <span className="hidden sm:inline">Import CSV</span>
-            </button>
+            {/* Import CSV Button (Super Admin only) */}
+            {currentUser.role === 'SUPER_ADMIN' && (
+              <button
+                onClick={() => setIsCsvModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition shadow-2xs"
+                title="Import leads from CSV (Super Admin only)"
+              >
+                <Upload className="w-3.5 h-3.5 text-slate-500" />
+                <span className="hidden sm:inline">Import CSV</span>
+              </button>
+            )}
 
             {/* Counselor Management for School Admin */}
             {(currentUser.role === 'SCHOOL_ADMIN' || currentUser.role === 'SUPER_ADMIN') && (
@@ -365,7 +373,7 @@ export default function SchoolDashboard({
         </div>
 
         {/* 3. Primary KPI Cards Grid */}
-        <div id="section-overview" className="space-y-6">
+        <div id="section-overview" className="space-y-6 scroll-mt-36">
         <div className="grid grid-cols-2 lg:grid-cols-6 gap-3.5 sm:gap-4">
           {/* Total Leads */}
           <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs hover:shadow-md transition">
@@ -596,7 +604,7 @@ export default function SchoolDashboard({
         </div>
 
         {/* 6. Follow-up Progress Grid (Matching Screenshot 4) & Pending Breakdown */}
-        <div id="section-followups" className="space-y-6">
+        <div id="section-followups" className="space-y-6 scroll-mt-36">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Follow-up Progress Bars (Screenshot 4) */}
           <div className="lg:col-span-7 bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-4">
@@ -750,13 +758,27 @@ export default function SchoolDashboard({
         </div>
 
         {/* 7. Campaign Performance Matrix */}
-        <div id="section-campaigns" className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
-          <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
+        <div id="section-campaigns" className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden scroll-mt-36">
+          <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
               <FileSpreadsheet className="w-3.5 h-3.5 text-indigo-600" />
               <span>Campaign Performance Comparison Matrix</span>
             </h3>
-            <span className="text-xs text-slate-400">{campaigns.length} campaigns</span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-400">
+                {selectedCampaignId === 'ALL'
+                  ? `Showing all ${campaigns.length} campaigns`
+                  : `Filtered to selected campaign (${campaigns.find((c) => c.id === selectedCampaignId)?.tabName || '1'})`}
+              </span>
+              {selectedCampaignId !== 'ALL' && (
+                <button
+                  onClick={() => setSelectedCampaignId('ALL')}
+                  className="text-xs font-bold text-[#10457C] hover:underline"
+                >
+                  Show All ({campaigns.length})
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="overflow-x-auto">
@@ -773,13 +795,19 @@ export default function SchoolDashboard({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
-                {campaigns.map((c) => (
+                {(selectedCampaignId === 'ALL'
+                  ? campaigns
+                  : campaigns.filter((c) => c.id === selectedCampaignId)
+                ).map((c) => (
                   <tr
                     key={c.id}
                     className={`hover:bg-slate-50/70 transition cursor-pointer ${
                       selectedCampaignId === c.id ? 'bg-indigo-50/40 font-medium' : ''
                     }`}
-                    onClick={() => setSelectedCampaignId(c.id)}
+                    onClick={() => {
+                      setSelectedCampaignId(c.id);
+                      scrollToSection('section-leadlist', 'leadlist');
+                    }}
                   >
                     <td className="py-3.5 px-4 font-semibold text-slate-900">{c.tabName}</td>
                     <td className="py-3.5 px-4">{c.totalLeads}</td>
@@ -787,15 +815,17 @@ export default function SchoolDashboard({
                     <td className="py-3.5 px-4">{c.followedPercent}%</td>
                     <td className="py-3.5 px-4 text-emerald-700 font-semibold">{c.positiveCount}</td>
                     <td className="py-3.5 px-4">{c.positiveRatePercent}%</td>
-                    <td className="py-3.5 px-4 text-end">
+                    <td className="py-3.5 px-4 text-end" onClick={(e) => e.stopPropagation()}>
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
+                        onClick={() => {
                           setSelectedCampaignId(c.id);
+                          scrollToSection('section-leadlist', 'leadlist');
                         }}
-                        className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold"
+                        className="inline-flex items-center gap-1 text-xs text-[#10457C] hover:text-[#0A2B4E] font-bold hover:underline"
+                        title="View leads for this campaign tab"
                       >
-                        Filter Tab →
+                        <span>View Leads ({c.totalLeads})</span>
+                        <ArrowUpRight className="w-3.5 h-3.5" />
                       </button>
                     </td>
                   </tr>
@@ -813,7 +843,7 @@ export default function SchoolDashboard({
         </div>
 
         {/* 8. Priority Leads to Close (WhatsApp Action Cards) */}
-        <div id="section-positive" className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-4">
+        <div id="section-positive" className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-4 scroll-mt-36">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
@@ -886,7 +916,7 @@ export default function SchoolDashboard({
         </div>
 
         {/* 9. Recent Follow-Up Activity & Counselor Notes Stream (Replaces legacy intake trend) */}
-        <div id="section-activity" className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-4">
+        <div id="section-activity" className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-4 scroll-mt-36">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
             <div>
               <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
@@ -999,12 +1029,12 @@ export default function SchoolDashboard({
         </div>
 
         {/* 10. Master Lead Directory & Interactive Table */}
-        <div id="section-leadlist">
+        <div id="section-leadlist" className="scroll-mt-36">
           <MasterLeadList
             selectedCampaignId={selectedCampaignId}
             selectedStatus={leadFilterStatus}
             onSelectLead={(id) => setSelectedLeadId(id)}
-            onOpenCsvImport={() => setIsCsvModalOpen(true)}
+            onOpenCsvImport={currentUser.role === 'SUPER_ADMIN' ? () => setIsCsvModalOpen(true) : undefined}
             refreshTrigger={refreshLeadsCounter}
           />
         </div>

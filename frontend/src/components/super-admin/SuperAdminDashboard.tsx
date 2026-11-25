@@ -10,6 +10,7 @@ import {
   Search,
   Plus,
   SlidersHorizontal,
+  Edit3,
   ExternalLink,
   CheckCircle2,
   AlertTriangle,
@@ -29,6 +30,7 @@ import CreateTenantModal from './CreateTenantModal';
 import EditTenantModal from './EditTenantModal';
 import TenantUsersModal from './TenantUsersModal';
 import ChilliPagesLogo from '../common/ChilliPagesLogo';
+import GoogleSheetNoticeBoard from '../common/GoogleSheetNoticeBoard';
 
 interface Props {
   currentUser: AuthUser;
@@ -301,6 +303,9 @@ export default function SuperAdminDashboard({
           </div>
         </div>
 
+        {/* 3b. Google Sheets Pipeline Notice Board for Super Admin */}
+        <GoogleSheetNoticeBoard variant="banner" defaultOpen={true} />
+
         {/* 4. Filter & Search Bar */}
         <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-bespoke flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-3 flex-1 min-w-[280px]">
@@ -565,10 +570,11 @@ export default function SuperAdminDashboard({
                       {/* Settings Edit Button */}
                       <button
                         onClick={() => setEditingTenant(t)}
-                        className="p-2 text-slate-600 hover:text-slate-900 hover:bg-white rounded-xl border border-transparent hover:border-slate-200 transition shadow-2xs"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-slate-700 hover:text-[#10457C] bg-white hover:bg-[#F0F5FA] rounded-xl border border-slate-200 shadow-2xs transition"
                         title="Edit school settings & white-labeling"
                       >
-                        <SlidersHorizontal className="w-3.5 h-3.5" />
+                        <Edit3 className="w-3.5 h-3.5 text-[#10457C]" />
+                        <span>EDIT</span>
                       </button>
                     </div>
 

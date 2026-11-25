@@ -339,25 +339,25 @@ export default function MasterLeadList({
           <table className="w-full text-start border-collapse text-xs">
             <thead>
               <tr className="border-b border-slate-200/80 bg-slate-50/75 text-slate-600 font-semibold uppercase tracking-wider text-[11px]">
-                <th className="py-3 px-4 text-start">Feedback</th>
-                <th className="py-3 px-4 text-start">Lead / Candidate Name</th>
-                <th className="py-3 px-4 text-start">Contact</th>
-                <th className="py-3 px-4 text-start">Campaign Tab</th>
-                <th className="py-3 px-4 text-start">Grade / Experience</th>
-                <th className="py-3 px-4 text-start cursor-pointer hover:text-slate-900" onClick={() => {
+                <th className="py-2.5 px-3 text-start whitespace-nowrap">Feedback</th>
+                <th className="py-2.5 px-3 text-start">Lead / Candidate</th>
+                <th className="py-2.5 px-3 text-start whitespace-nowrap">Contact</th>
+                <th className="py-2.5 px-3 text-start whitespace-nowrap">Campaign</th>
+                <th className="py-2.5 px-3 text-start whitespace-nowrap">Grade / Experience</th>
+                <th className="py-2.5 px-3 text-start whitespace-nowrap cursor-pointer hover:text-slate-900" onClick={() => {
                   setSortBy('lead_date');
                   setOrder(order === 'asc' ? 'desc' : 'asc');
                 }}>
-                  Lead Date {sortBy === 'lead_date' ? (order === 'asc' ? '↑' : '↓') : ''}
+                  Date {sortBy === 'lead_date' ? (order === 'asc' ? '↑' : '↓') : ''}
                 </th>
-                <th className="py-3 px-4 text-start cursor-pointer hover:text-slate-900" onClick={() => {
+                <th className="py-2.5 px-3 text-start whitespace-nowrap cursor-pointer hover:text-slate-900" onClick={() => {
                   setSortBy('last_updated_at');
                   setOrder(order === 'asc' ? 'desc' : 'asc');
                 }}>
-                  Last Update {sortBy === 'last_updated_at' ? (order === 'asc' ? '↑' : '↓') : ''}
+                  Updated {sortBy === 'last_updated_at' ? (order === 'asc' ? '↑' : '↓') : ''}
                 </th>
-                <th className="py-3 px-4 text-start">Latest Follow-Up Note</th>
-                <th className="py-3 px-4 text-end">Action</th>
+                <th className="py-2.5 px-3 text-start min-w-[200px] max-w-[260px]">Latest Follow-Up Note</th>
+                <th className="py-2.5 px-3 text-end whitespace-nowrap">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -369,24 +369,24 @@ export default function MasterLeadList({
                     onClick={() => onSelectLead(lead.id)}
                     className="hover:bg-indigo-50/40 cursor-pointer transition group"
                   >
-                    <td className="py-3 px-4 whitespace-nowrap">
+                    <td className="py-2.5 px-3 whitespace-nowrap">
                       {getStatusBadge(lead.feedback_status, lead.pending_substatus)}
                     </td>
 
-                    <td className="py-3 px-4 font-semibold text-slate-900" dir="auto">
-                      <div className="flex items-center gap-1.5">
-                        <span>{lead.parent_name}</span>
+                    <td className="py-2.5 px-3 font-semibold text-slate-900 max-w-[160px] truncate" dir="auto" title={lead.parent_name}>
+                      <div className="flex items-center gap-1.5 truncate">
+                        <span className="truncate">{lead.parent_name}</span>
                         {lead.is_duplicate && (
-                          <span className="px-1.5 py-0.2 text-[9px] rounded bg-purple-100 text-purple-700 font-semibold" title="Phone number recorded earlier">
+                          <span className="px-1.5 py-0.2 text-[9px] rounded bg-purple-100 text-purple-700 font-semibold shrink-0" title="Phone number recorded earlier">
                             Dup
                           </span>
                         )}
                       </div>
                     </td>
 
-                    <td className="py-3 px-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-slate-700">{lead.phone_raw || lead.phone_normalized || 'N/A'}</span>
+                    <td className="py-2.5 px-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono text-slate-700 text-[11px]">{lead.phone_raw || lead.phone_normalized || 'N/A'}</span>
                         {whatsAppUrl && (
                           <a
                             href={whatsAppUrl}
@@ -403,33 +403,33 @@ export default function MasterLeadList({
                       </div>
                     </td>
 
-                    <td className="py-3 px-4 whitespace-nowrap text-slate-600">
+                    <td className="py-2.5 px-3 whitespace-nowrap text-slate-600 max-w-[130px] truncate" title={lead.campaign_tab}>
                       {lead.campaign_tab}
                     </td>
 
-                    <td className="py-3 px-4 whitespace-nowrap font-medium text-slate-800">
+                    <td className="py-2.5 px-3 whitespace-nowrap font-medium text-slate-800 text-[11px]">
                       {formatGrade(lead.grade)}
                     </td>
 
-                    <td className="py-3 px-4 whitespace-nowrap text-slate-500">
+                    <td className="py-2.5 px-3 whitespace-nowrap text-slate-500 text-[11px]">
                       {lead.lead_date ? new Date(lead.lead_date).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
                     </td>
 
-                    <td className="py-3 px-4 whitespace-nowrap text-slate-500">
+                    <td className="py-2.5 px-3 whitespace-nowrap text-slate-500 text-[11px]">
                       {new Date(lead.last_updated_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}
                     </td>
 
-                    <td className="py-3 px-4 max-w-xs truncate text-slate-600 font-sans" dir="auto">
+                    <td className="py-2.5 px-3 max-w-[260px] text-slate-600 font-sans" dir="auto">
                       {lead.latest_note ? (
-                        <span>
+                        <p className="line-clamp-2 leading-relaxed text-[11px]" title={lead.latest_note.note_text}>
                           <span className="font-semibold text-indigo-700">S{lead.latest_note.stage}:</span> {lead.latest_note.note_text}
-                        </span>
+                        </p>
                       ) : (
-                        <span className="text-slate-400 italic">No notes yet</span>
+                        <span className="text-slate-400 italic text-[11px]">No notes yet</span>
                       )}
                     </td>
 
-                    <td className="py-3 px-4 text-end whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                    <td className="py-2.5 px-3 text-end whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={() => onSelectLead(lead.id)}
                         className="px-2.5 py-1 rounded-xl text-xs font-bold text-[#10457C] bg-[#F0F5FA] hover:bg-[#10457C] hover:text-white transition shadow-2xs border border-[#10457C]/10"

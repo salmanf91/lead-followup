@@ -145,6 +145,62 @@ schoolAdminRouter.patch('/users/:id', async (req: Request, res: Response): Promi
 });
 
 /**
+ * PATCH /api/school-admin/campaigns/:id
+ * Toggles campaign active status (to complete/inactivate a campaign) or updates display settings.
+ */
+schoolAdminRouter.patch('/campaigns/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const user = req.user!;
+    let targetTenantId = user.tenantId;
+    if (user.role === 'SUPER_ADMIN' && typeof req.body.tenantId === 'string') {
+      targetTenantId = req.body.tenantId;
+    }
+
+    const { id } = req.params;
+    const { is_active, tab_name } = req.body;
+
+    const targetCamp = await query(
+      `SELECT id FROM campaigns WHERE id = $1 AND tenant_id = $2`,
+      [id, targetTenantId]
+    );
+
+    if (!targetCamp.rows.length) {
+      res.status(404).json({ error: 'Campaign not found in this tenant' });
+      return;
+    }
+
+    const updates: string[] = [];
+    const values: any[] = [];
+    let valIdx = 1;
+
+    if (typeof is_active === 'boolean') {
+      updates.push(`is_active = $${valIdx++}`);
+      values.push(is_active);
+    }
+    if (typeof tab_name === 'string' && tab_name.trim().length > 0) {
+      updates.push(`tab_name = $${valIdx++}`);
+      values.push(tab_name.trim());
+    }
+
+    if (updates.length === 0) {
+      res.status(400).json({ error: 'No valid campaign update fields provided' });
+      return;
+    }
+
+    values.push(id, targetTenantId);
+    const sql = `UPDATE campaigns SET ${updates.join(', ')} WHERE id = $${valIdx++} AND tenant_id = $${valIdx++} RETURNING id, tab_name, is_active, display_order`;
+    const updateRes = await query(sql, values);
+
+    // Invalidate dashboard LRU cache so overview updates immediately
+    dashboardCache.invalidate(targetTenantId);
+
+    res.json({ success: true, campaign: updateRes.rows[0] });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Failed to update campaign' });
+  }
+});
+
+/**
  * Simple CSV parser supporting quotes, commas, semicolons, and newlines.
  */
 function parseCsv(csvText: string): { rows: Array<Record<string, string>>; detectedCampaign?: string } {
